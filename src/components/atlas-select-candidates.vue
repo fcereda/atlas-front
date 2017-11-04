@@ -7,6 +7,7 @@
 		</atlas-select-uf>
 		<p></p>
 
+<!--
 		<v-chip close 
 			v-for="candidato in candidatosSelecionados"
 			:v-model="candidato.show"
@@ -14,13 +15,12 @@
 			text-color="white"
 			@input="removeChip(candidato)"
 		>{{ candidato.nome }} ({{ candidato.partido }}) &mdash; {{ candidato.cargo }} {{ candidato.ano }}</v-chip>
-
+-->
 
 		<v-data-table
       		v-bind:headers="headersCandidatosSelecionados"
       		:items="candidatosSelecionados"
       		class="elevation-4"
-      		v-show="false"
     	>
 
 		    <template slot="items" scope="candidato">
