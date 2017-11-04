@@ -7,7 +7,7 @@
 		</atlas-select-uf>
 		<p></p>
 
-<!--
+
 		<v-chip close 
 			v-for="candidato in candidatosSelecionados"
 			:v-model="candidato.show"
@@ -15,29 +15,8 @@
 			text-color="white"
 			@input="removeChip(candidato)"
 		>{{ candidato.nome }} ({{ candidato.partido }}) &mdash; {{ candidato.cargo }} {{ candidato.ano }}</v-chip>
--->
-
-		<v-data-table
-      		v-bind:headers="headersCandidatosSelecionados"
-      		:items="candidatosSelecionados"
-      		class="elevation-4"
-    	>
-
-		    <template slot="items" scope="candidato">
-
-     	    	<tr class="pa-0">
-     	    		<td class="pl-2 pr-2"><v-icon :color="candidato.item.color">bookmark</v-icon></td> 	
-					<td class="pl-2" style="width:50%">{{ candidato.item.nome }}</td>
-			        <td class="text-xs-left">{{ candidato.item.cargo }}</td>
-			        <td class="pr-2 text-xs-right">{{ candidato.item.ano }}</td>
-			        <td class="pl-0 pr-1"><v-icon class="delete-button" @click="deleteCandidate(candidato)">delete_forever</v-icon></td>
-
-			    </tr>  
-		    </template>
-  	    </v-data-table>
 
 	    <p></p>
-
 
 		<atlas-select-candidate
 			@add-candidate="addCandidate">
@@ -139,18 +118,6 @@ export default {
 
     		this.candidatosSelecionados.push({...candidate, color:'purple darken-4'})
 
-    	},
-
-    	deleteCandidate (obj) {
-	   		var candidateToRemove = obj.item,
-    			indexToRemove = this.candidatosSelecionados.indexOf(candidateToRemove)
-    		if (indexToRemove >= 0)
-    			this.candidatosSelecionados.splice(indexToRemove, 1)
-    		else {
-    			console.error('Error trying to remove candidate from list')
-    			console.log(obj)
-    			console.log(this.candidatosSelecionados)		
-    		}
     	},
 
     	removeChip (candidato) {
