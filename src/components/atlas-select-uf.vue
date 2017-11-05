@@ -118,8 +118,9 @@ export default {
 	methods: {
 
 		setUF (uf) {
-			console.log(uf);
-			this.title = uf.nome;
+			console.log(uf)
+			this.title = uf.nome
+			this.$emit('input', uf)
 		}
 
 	}

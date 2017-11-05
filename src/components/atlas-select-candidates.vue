@@ -3,22 +3,25 @@
 <div class="select-candidates">
 	<v-container fluid>
 
-		<atlas-select-uf>
+		<atlas-select-uf
+			@input="setUF">
 		</atlas-select-uf>
 		<p></p>
 
-
-		<v-chip close 
+		<atlas-candidate-chip
 			v-for="candidato in candidatosSelecionados"
-			:v-model="candidato.show"
+			:nome="candidato.nome"
+			:partido="candidato.partido"
+			:cargo="candidato.cargo"
+			:ano="candidato.ano"
 			:color="candidato.color"
-			text-color="white"
-			@input="removeChip(candidato)"
-		>{{ candidato.nome }} ({{ candidato.partido }}) &mdash; {{ candidato.cargo }} {{ candidato.ano }}</v-chip>
+			@remove="removeChip(candidato)"
+		></atlas-candidate-chip>	
 
 	    <p></p>
 
 		<atlas-select-candidate
+			:uf="uf.sigla"
 			@add-candidate="addCandidate">
 		</atlas-select-candidate>
 
@@ -32,17 +35,32 @@
 
 import AtlasSelectCandidate from './atlas-select-candidate.vue'
 import AtlasSelectUf from './atlas-select-uf.vue'
+import AtlasCandidateChip from './atlas-candidate-chip.vue'
+
+var currentColorIndex = 0
+
+function getNextColor () {
+	var baseColors = ['deep-orange', 'indigo', 'pink', 'blue', 'purple', 'cyan', 'deep-purple', 'light-blue',
+		'green', 'amber', 'lime', 'red', 'blue-grey', 'orange'];
+	var color = baseColors[currentColorIndex % baseColors.length] + ' darken-' + (currentColorIndex / baseColors.length + 1)
+	currentColorIndex += 1;
+	return color; 	
+}
+
 
 export default {
 
 	components: {
 		AtlasSelectCandidate,
-		AtlasSelectUf
+		AtlasSelectUf,
+		AtlasCandidateChip
 	},
 
 	props: [],
 
     data: () => ({
+
+    	uf: '',
 
         headersCandidatosSelecionados: [
  		{	
@@ -82,7 +100,7 @@ export default {
     		cargo: 'D Federal',
     		ano: 2006,
     		votos: 1675887,
-    		color: 'orange darken-2',
+    		color: getNextColor(),
     		show: true
     	}, {
     		nome: 'Gilberto Kassab',
@@ -90,7 +108,7 @@ export default {
     		cargo: 'Senador',
     		ano: 2014,
     		votos: 567099,
-    		color: 'indigo',
+    		color: getNextColor(),
     		show: true
     	}, {
     		nome: 'Luiza Erundina',
@@ -98,7 +116,7 @@ export default {
     		cargo: 'D Federal',
     		ano: 2010,
     		votos: 90001,
-    		color: 'orange darken-4',
+    		color: getNextColor(),
     		show: true
     	}, {
     		nome: 'Geraldo Alckmin',
@@ -106,7 +124,7 @@ export default {
     		cargo: 'Governador',
     		ano: 2014,
     		votos: 35090000,
-    		color: 'purple darken-3',
+    		color: getNextColor(),
     		show: true
     	}],
 
@@ -114,9 +132,13 @@ export default {
 
     methods: {
 
+    	setUF (uf) {
+    		this.uf = uf
+    	},
+
     	addCandidate (candidate) {
 
-    		this.candidatosSelecionados.push({...candidate, color:'purple darken-4'})
+    		this.candidatosSelecionados.push({...candidate, color: getNextColor() })
 
     	},
 
