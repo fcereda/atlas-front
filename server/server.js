@@ -31,6 +31,8 @@ function filterCandidates (uf, ano, cargo, nome) {
 router.route('/api/candidatos')
 	.get(function (req, res) {
 		var { uf, ano, cargo, nome } = req.query;
+		if (cargo == 'pr1' || cargo == 'pr2')
+			uf = null;
 		if (uf)
 			uf = uf.toUpperCase();
 		if (nome)
@@ -39,19 +41,32 @@ router.route('/api/candidatos')
 	});
 	
 
+function parseRow (row) {
+
+	const cargos = ['pr', 'vpr', 'g', 'vg', 's', 'df', 'de', 'de', '1s', '2s']
+
+	var nome = row[6],
+		uf = row[2],
+		ano = row[0],
+		partido = row[9],
+		cargo = cargos[parseInt(row[4]) - 1]
+	if (cargo == 'pr' || cargo == 'g')
+		cargo = cargo + row[1]
+	return {
+		nome,
+		uf,
+		ano,
+		partido,
+		cargo
+	}
+}	
+
 console.log('Loading candidates...')
 fs.readFile('./candidatos.csv', function (err, fileData) {
   parse(fileData, {delimiter: ',', trim: true}, function(err, rows) {
   	console.log(rows.length + ' candidates loaded');
-    rows.forEach((row) => {
-    	var candidato = {
-    		nome: row[6],
-    		uf: row[2],
-    		ano: row[0],
-    		partido: row[9]
-    	};
-    	candidatos.push(candidato);
-    })
+    candidatos = rows.map((row) => parseRow(row))
+    console.log(candidatos)
   })
 })
 

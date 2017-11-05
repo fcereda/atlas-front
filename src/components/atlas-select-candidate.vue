@@ -241,6 +241,7 @@ export default {
 			axios.get('/api/candidatos', { params: {
 				uf: this.uf,
 				ano: this.ano,
+				cargo: this.cargo,
 				nome: val
 			}})
       		.then(function (response) {
