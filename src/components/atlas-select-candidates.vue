@@ -36,6 +36,7 @@
 import AtlasSelectCandidate from './atlas-select-candidate.vue'
 import AtlasSelectUf from './atlas-select-uf.vue'
 import AtlasCandidateChip from './atlas-candidate-chip.vue'
+import api from '../lib/api.js'
 
 var currentColorIndex = 0
 
@@ -139,6 +140,9 @@ export default {
     	addCandidate (candidate) {
 
     		this.candidatosSelecionados.push({...candidate, color: getNextColor() })
+    		console.log(candidate)
+    		console.log('uf: ', this.uf)
+    		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla});
 
     	},
 

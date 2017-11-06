@@ -181,14 +181,15 @@ export default {
 		},
 
 		addCandidate () {
-			var { nome, partido } = this.candidatoSelecionado,
+			var { nome, partido, numero } = this.candidatoSelecionado,
 				cargo = this.cargo,
 				ano = parseInt(this.ano),	
 				newCandidate = {
 					nome: Utils.capitalizeName(nome), 
 					ano, 
 					cargo, 
-					partido
+					partido,
+					numero
 				}
 			this.$emit('add-candidate', newCandidate)
 			this.candidatoSelecionado = null

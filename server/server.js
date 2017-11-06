@@ -49,7 +49,8 @@ function parseRow (row) {
 		uf = row[2],
 		ano = row[0],
 		partido = row[9],
-		cargo = cargos[parseInt(row[4]) - 1]
+		cargo = cargos[parseInt(row[4]) - 1],
+		numero = parseInt(row[7])
 	if (cargo == 'pr' || cargo == 'g')
 		cargo = cargo + row[1]
 	return {
@@ -57,21 +58,22 @@ function parseRow (row) {
 		uf,
 		ano,
 		partido,
-		cargo
+		cargo,
+		numero,
+		id: uf + '-' + ano + '-' + cargo + '-' + numero
 	}
 }	
 
 console.log('Loading candidates...')
 fs.readFile('./candidatos.csv', function (err, fileData) {
   parse(fileData, {delimiter: ',', trim: true}, function(err, rows) {
-  	console.log(rows.length + ' candidates loaded');
+  	console.log(rows.length + ' candidatos carregados');
     candidatos = rows.map((row) => parseRow(row))
-    console.log(candidatos)
   })
 })
 
 
 app.use('', router);
 app.listen(port);
-console.log('Hiline server listening on port ' + port);
+console.log('Hiline server operando na porta ' + port);
 
