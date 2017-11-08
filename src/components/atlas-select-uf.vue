@@ -2,7 +2,24 @@
 
 		<v-layout row>
 			<v-flex sm12>
-    <v-menu offset-y class="width100">
+
+
+            <v-select
+              v-bind:items="ufs"
+              item-value="sigla"
+              item-text="nome"
+              v-model="uf"
+              label="Selecione uma UF para comećar..."
+              return-object
+              single-line
+              hide-details
+              autocomplete
+              editable
+              @input="setUf"
+            ></v-select>
+
+
+    <v-menu offset-y class="width100" v-show="false">
       <v-btn large block elevation-4 color="primary" slot="activator">{{ title }}</v-btn>
       <div style="height:400px">
       <v-list dense>
@@ -25,10 +42,11 @@
 
 export default {
 
+	props: [ 'uf' ],
+
 	data: function () {
 
 		return {
-			title: 'Selecione a UF',
     		ufs: [{
     			sigla: 'AC',
     			nome: 'Acre'
@@ -115,11 +133,18 @@ export default {
 		}
 	},
 
+	computed: {
+
+		title () {
+			return this.uf ? 'Selecione a UF' : this.uf.nome
+		}	
+
+	},
+
 	methods: {
 
-		setUF (uf) {
-			console.log(uf)
-			this.title = uf.nome
+		setUf (uf) {
+			console.log('changing uf to ' + uf.sigla)
 			this.$emit('input', uf)
 		}
 

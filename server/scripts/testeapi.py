@@ -50,3 +50,19 @@ def votos(cargo=1,
 
 
 votos(1, 2010, 2, 7, 'SP', 45, 45)    
+
+
+
+http://cepesp.io/api/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=NUM_ZONA
+
+
+http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=NUM_ZONA&selected_columns[]="NUM_ZONA"&selected_columns[]="QTDE_VOTOS"
+
+
+para obter todos os votos de um candidato em uma UF/ano por zona+municipio:
+
+http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22
+
+
+
+http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=COD_MUN_TSE&colmns[2][search][value]=71072&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22

@@ -15,6 +15,7 @@ module.exports = {
       'public': path.resolve(__dirname, './public')
     }
   },
+
   module: {
     rules: [
       {
@@ -46,8 +47,36 @@ module.exports = {
   },
   devServer: {
     historyApiFallback: true,
-    noInfo: true
-  },
+    noInfo: true,
+
+    proxy: {
+      // proxy all requests starting with /api to localhost:8008/api
+      '/api': {
+        target: {
+          'host': 'localhost',
+          'protocol': 'http:',
+          'port': 8008
+        }, 
+        secure: false,
+        changeOrigin: true,
+      },
+
+      '/cepesp': {
+        target: {
+          'host': 'cepesp.io',
+          'protocol': 'http',
+          'port': 80
+        },
+        pathRewrite: {
+          "^/cepesp" : ""
+        }, 
+        secure: false,
+        changeOrigin: true
+      }
+
+    },  
+
+  },    
   performance: {
     hints: false
   },

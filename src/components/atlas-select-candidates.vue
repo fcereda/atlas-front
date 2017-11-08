@@ -4,6 +4,7 @@
 	<v-container fluid>
 
 		<atlas-select-uf
+			:uf="uf"
 			@input="setUF">
 		</atlas-select-uf>
 		<p></p>
@@ -61,7 +62,10 @@ export default {
 
     data: () => ({
 
-    	uf: '',
+    	uf: {
+    		sigla: 'SP',
+    		nome: "São Paulo"
+    	},	
 
         headersCandidatosSelecionados: [
  		{	
@@ -134,7 +138,9 @@ export default {
     methods: {
 
     	setUF (uf) {
+    		console.log('setUF to ', uf)
     		this.uf = uf
+    		this.$emit('change-uf', uf.sigla)
     	},
 
     	addCandidate (candidate) {
