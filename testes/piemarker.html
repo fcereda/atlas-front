@@ -1,0 +1,571 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Quick Start - Leaflet</title>
+
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700,800,900" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800,900" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Work+Sans" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ==" crossorigin=""/>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.2.0/dist/MarkerCluster.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.2.0/dist/MarkerCluster.Default.css" crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log==" crossorigin=""></script>
+
+<script src="http://sashakavun.github.io/leaflet-canvasicon/leaflet-canvasicon.js"></script>
+<script type="text/javascript" src="leaflet-piechart.js"></script>
+
+    <script src="https://unpkg.com/leaflet.markercluster@1.2.0/dist/leaflet.markercluster.js"></script>
+
+<style>
+
+body {
+	padding:0;
+margin: 0;
+}
+
+.nopadding: {
+	padding:0;
+}
+
+.sidebar-inicial {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 300px;
+  height:300px;
+  background-color:#455a64;
+background-color: rgba(69, 90, 100, 0.875);
+  color: white;
+  z-index:1000;
+  font-family:'Roboto';
+  font-size: 12px;
+  font-weight:700;
+  padding: 32px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-inicial:hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  height:100%;
+  background-color: #1ba1e2;
+background-color:#455a64;
+  color: white;
+z-index:1000;
+  font-family:'Roboto';
+box-shadow: box-shadow: 10px 0px 78px -12px black; 
+padding:16px;
+}
+
+  
+
+.cepesp-logo-grande {
+    width:100;
+    padding-top:32px;
+    font-size:32px;
+    line-height:1.0;
+    transition: all 0.2s ease;
+}
+
+.sidebar-inicial:hover .cepesp-logo-grande {
+    padding-top:0;
+    width:100%;
+    font-size:22px;
+
+}
+
+.select-address {
+  width: 100%;
+  border: 1px solid #333;
+  width: 100%;
+  height: 32px;
+  background-color: #aaa;
+  color: black;
+  font-family:'work sans';
+}
+
+.address-bar {
+  background-color: white;
+
+  margin: 2px;
+
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 0px;
+
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 400px;
+  height: 40px;
+  z-index: 1000;
+padding-top: 4px;
+padding-bottom:4px;
+padding-left:40px;
+font-family: 'Montserrat';
+font-weight: 800;
+font-size: 16px;
+}
+ 
+.leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0px;
+}
+
+.textbox {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  height: 100px;
+  width: 200px;
+  z-index:1000;
+}
+
+.my-div-icon {
+  width:40px;
+  height: 40px;
+  background-color: black;
+  border: 1px solid red;
+}
+
+</style>
+	
+</head>
+<body>
+
+<div id="sideba" class="sidebar-inicial">
+  <div class="cepesp-logo-grande">
+    <span>CEPESP</span>
+    <span style="font-weight:100">Atlas&nbsp;Eleitoral</span>
+  </div>
+  <div class="select-address" style="margin-top:64px">Para começar, escolha um estado</div>
+</div>  
+
+
+<div id="mapid" class="nopadding" style="width: 600px; height: 400px;"></div>
+<div id="address" class="address-bar"></div>
+<textarea id="textbox" class="textbox"></textarea>
+<script>
+
+var mapDiv = document.getElementById('mapid');
+var winHeight = document.documentElement.scrollHeight
+var winWidth =  document.documentElement.scrollWidth
+mapDiv.setAttribute('style', 'width:' + winWidth + 'px;height:' + winHeight + 'px');
+//mapDiv.setAttribute('style', 'position:absolute;left:300px;top:0;right:0;bottom:0');
+
+	
+	var map = L.map('mapid', {
+		zoomDelta: 1,
+		zoomSnap: 0.25
+	}).setView([-23.59, -46.64], 14);
+
+	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+			'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+		id: 'mapbox.streets'
+	}).addTo(map);
+
+
+var weightMarker = L.Marker.extend({
+   options: { 
+      customWeight: 1
+   }
+});
+
+
+
+  var marker1 = {
+    radius: 10,             
+    data: [
+      { name: 'PMDB', value: 25 },
+      { name: 'PSDB', value: 35 },
+      { name: 'PT', value: 20 },
+      { name: 'PDT', value: 30 }
+    ]
+  };
+
+
+var dadosEleitorais = {
+  colors: {
+    'PMDB': 'rgba(0,0,200,.7)',
+    'PT': 'rgba(0,200,0,.7)',
+    'PSDB': 'rgba(200,0,127,.7)',
+    'PP': 'rgba(200,127,0,.7)',
+  },
+  defaultRadius: 10,
+  points: [ {
+    lat: -22.888967,
+    long: -43.219251,
+    radius: 20,
+    data: {
+      'PMDB': 25,
+      'PT': 12,
+      'PSDB': 15,
+      'PP': 20
+    } 
+  }, {
+    lat: -22.897495,
+    long: -43.185659,
+    radius: 20,
+    data: {
+      'PMDB': 25,
+      'PT': 12,
+      'PSDB': 15,
+      'PP': 20
+  } }, {    
+    lat: -22.878967,
+    long: -43.219251,
+    radius: 20,
+    data: {
+      'PMDB': 25,
+      'PT': 12,
+      'PSDB': 15,
+      'PP': 20
+  } }, {
+    lat: -22.868967,
+    long: -43.219251,
+    radius: 20,
+    data: {
+      'PMDB': 2,
+      'PT': 12,
+      'PSDB': 15,
+      'PP': 20
+  } }, {  
+    lat: -22.858967,
+    long: -43.219251,
+    radius: 20,
+    data: {
+      'PMDB': 25,
+      'PT': 12,
+      'PSDB': 15,
+      'PP': 20
+    }
+  } ] 
+};
+  
+
+console.log('passou por aqui!')
+
+
+function addPieMarkers (dados) {
+
+  var defaultRadius = dados.defaultRadius || 20,
+      colors = dados.colors,
+      markers = [];
+
+  function convertDataToPiechartFormat (sourceData) {
+    convertedData = [];
+    for (var id in sourceData) {
+      convertedData.push({
+        name: id,
+        value: sourceData[id],
+        style: {
+          fillStyle: colors[id],
+          strokeStyle: colors[id]
+        }
+      });
+    }
+    return convertedData;
+  }
+
+  dados.points.forEach((point) => {
+    var marker = L.piechartMarker(
+      L.latLng([point.lat, point.long]), {
+        radius: defaultRadius, //point.radius || defaultRadius,
+        data: convertDataToPiechartFormat(point.data),
+      }
+    );
+    markers.push(marker);
+    marker.addTo(map);
+  });
+
+  return markers;
+	
+  // O resto da função é ignorado e está aqui só por referência
+   
+          
+
+
+  var addedMarker = L.piechartMarker(
+   L.latLng([-22.897495, -43.185659]), 
+   {
+    radius: radius,             
+    data: [
+      { name: 'PMDB', value: 25 },
+      { name: 'PSDB', value: 35 },
+      { name: 'PT', value: 20 },
+      { name: 'PDT', value: 30 }
+    ]
+  });
+  addedMarker.addTo(map);
+
+  L.piechartMarker(
+          L.latLng([-22.888967, -43.219251]),
+          {
+              radius: radius,
+              data: [
+                  { name: 'Boots', value: 500 },
+                  { name: 'Big Boots', value: 200 },
+                  { name: 'Sneakers', value: 700 },
+                  { name: 'Shoes', value: 350 },
+                  { name: 'Moccasins', value: 100 },
+                  { name: 'Bare foot', value: 200 }
+              ]
+          }
+      ).addTo(map);
+
+  L.piechartMarker(
+          L.latLng([-22.939830, -43.178638]),
+          {
+              radius: 25,
+              data: [
+                  { name: 'Black', value: 500, style: { fillStyle: 'rgba(0,0,0,.6)', strokeStyle: 'rgba(0,0,0,.95)', lineWidth: 1 } },
+                  { name: 'Red', value: 200, style: { fillStyle: 'rgba(255,0,0,.6)', strokeStyle: 'rgba(255,0,0,.95)', lineWidth: 1 } },
+                  { name: 'Blue', value: 700, style: { fillStyle: 'rgba(0,0,255,.6)', strokeStyle: 'rgba(0,0,255,.95)', lineWidth: 1 } },
+                  { name: 'Green', value: 350, style: { fillStyle: 'rgba(0,127,0,.6)', strokeStyle: 'rgba(0,127,0,.95)', lineWidth: 1 } }
+              ]
+          }
+      ).addTo(map);
+      L.piechartMarker(
+          L.latLng([-22.834359, -43.285456]),
+          {
+              radius: 25,
+              data: [
+                  { name: 'One', value: 200 },
+                  { name: 'Two', value: 300 },
+                  { name: 'Three', value: 400 }
+              ]
+          }
+      ).addTo(map);
+ 
+  return addedMarker;
+
+}
+
+
+var markers = [];
+
+setTimeout(function () {
+  markers = addPieMarkers(dadosEleitorais);
+}, 5000);
+
+
+function redrawMarkers(zoom) {
+  markers.forEach((marker) => {
+    map.removeLayer(marker);
+  });
+  var radius = 5;
+  if (zoom) {
+    if (zoom > 11)
+      if (zoom < 13)
+        radius = 10;
+      else
+        radius = 20  
+    dadosEleitorais.defaultRadius = radius;
+  }
+  markers = addPieMarkers(dadosEleitorais);
+}
+
+
+map.on('zoomend', function(e) {
+    console.log(e);
+
+    var lat = map.getCenter().lat;
+    var zoom = map.getZoom();
+    metersPerPx = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom)
+    console.log('zoom = ', zoom, 'meters per pixel = ', metersPerPx);
+
+    redrawMarkers(zoom);
+
+      
+});
+
+
+
+
+/*
+var addedMarker = {}
+
+setTimeout(function () {
+  window.addedMarker = addPieMarkers();
+}, 2000);
+
+setTimeout(function () {
+  console.log(window.addedMarker);
+  map.removeLayer(window.addedMarker);
+  marker1.radius = 75;
+  window.addedMarker = L.piechartMarker(
+   L.latLng([-22.897495, -43.185659]), 
+   marker1
+  );
+  window.addedMarker.addTo(map);
+
+}, 4000);
+*/
+
+
+function mostrarEstados () {
+
+var estados = {"MATO GROSSO DO SUL":[[-58.16850828391636,-24.068597447874012],[-50.92291286539836,-17.166780615695586]],"SANTA CATARINA":[[-53.836873860171096,-29.35384668022551],[-48.355106938357295,-25.955835243775773]],"ESPIRITO SANTO":[[-41.879623009555395,-21.301798586613188],[-38.84078432468759,-17.8919628898678]],"ACRE":[[-73.99044996899828,-11.145578495833263],[-66.62374994682044,-7.111827704675488]],"RIO GRANDE DO SUL":[[-57.64376682264455,-33.75208127059592],[-49.69145695525251,-27.082300912734233]],"MATO GROSSO":[[-61.63340040070763,-18.041580757767292],[-50.22482294273574,-7.349015341893303]],"RORAIMA":[[-64.82524272692058,-1.5806494677588887],[-58.88687261636393,5.2718410772455755]],"PARAÍBA":[[-38.76558203759521,-8.302956077627027],[-34.79288142984251,-6.025907931582328]],"PIAUÍ":[[-45.99428964039032,-10.928761366451525],[-40.370511540906804,-2.7393099048490903]],"GOIÁS":[[-53.25081246908195,-19.4991647389655],[-45.906960668176254,-12.395750122340338]],"RIO GRANDE DO NORTE":[[-38.582118948605675,-6.982736440457561],[-34.96853277519552,-4.831540569836928]],"RIO DE JANEIRO":[[-44.88931172981614,-23.368936844438963],[-40.9585145792582,-20.76322889572094]],"PARANÁ":[[-54.61931255227314,-26.717114682216902],[-48.0235368023863,-22.516653528078784]],"AMAPÁ":[[-54.87624215511599,-1.236184960729986],[-49.87668107315433,4.436728303888998]],"SÃO PAULO":[[-53.110110774449566,-25.312330120754744],[-44.16214225280717,-19.779903117074248]],"DISTRITO FEDERAL":[[-48.285523719028504,-16.050296450045842],[-47.308378445650824,-15.500262345312745]],"BAHIA":[[-46.61710686569986,-18.347255447192623],[-37.34113542049852,-8.532807210106945]],"PARÁ":[[-58.8983418815875,-9.841163563019379],[-46.06093781153198,2.591012002886835]],"PERNAMBUCO":[[-41.358358451520644,-9.48253335801251],[-32.390973457255676,-3.8289759782339416]],"MARANHÃO":[[-48.75513142896972,-10.26176381868467],[-41.795906404340876,-1.0449675500081526]],"TOCANTINS":[[-50.7420687424835,-13.46769931726239],[-45.69667575421508,-5.168395404398332]],"CEARÁ":[[-41.423290748337514,-7.857575606490638],[-37.253309747822016,-2.7844996521176384]],"RONDÔNIA":[[-66.81023839317209,-13.693687077566501],[-59.77434087897784,-7.969301207898109]],"AMAZONAS":[[-73.80156832950942,-9.818061377887272],[-56.09753828307561,2.2466255437806737]],"SERGIPE":[[-38.24503995296037,-11.568559213142233],[-36.393882484042095,-9.515040317835222]],"MINAS GERAIS":[[-51.046094580082936,-22.922736870113766],[-39.85683295357111,-14.233349439377164]],"ALAGOAS":[[-38.237589446023804,-10.50117582170068],[-35.151950709597564,-8.813116324640603]],
+"SÃO PAULO 2":[[-53.110110774449566,-25.312330120754744],[-44.16214225280717,-19.779903117074248]]}
+
+
+  var index = 'ESPIRITO SANTO';
+  var bounds =  [
+	[ estados[index][0][1], estados[index][0][0] ],
+	[ estados[index][1][1], estados[index][1][0] ]
+  ];
+
+
+  function getBrazilBoundaries () {
+
+    var bounds = [ [ 1000, 1000], [-1000, -1000] ]
+
+    for (state in estados) {
+      bounds[0][0] = Math.min(bounds[0][0], estados[state][0][0])
+      bounds[0][1] = Math.min(bounds[0][1], estados[state][0][1])
+
+      bounds[1][0] = Math.max(bounds[1][0], estados[state][1][0])
+      bounds[1][1] = Math.max(bounds[1][1], estados[state][1][1])
+    }
+
+    return bounds;
+  }
+
+
+
+  function factory (state) {
+
+    function fitBoundsToState () {
+      var bounds =  [
+	[ estados[state][0][1], estados[state][0][0] ],
+	[ estados[state][1][1], estados[state][1][0] ]
+      ];
+
+      map.fitBounds(bounds)
+    }
+
+    return fitBoundsToState;
+  }
+
+  function factoryFlyTo (state) {
+
+    function flyTo () {
+      var center = [
+        (estados[state][0][1] + estados[state][1][1]) / 2,
+	(estados[state][0][0] + estados[state][1][0]) / 2 ];
+
+      var bounds =  [
+	[ estados[state][0][1], estados[state][0][0] ],
+	[ estados[state][1][1], estados[state][1][0] ]
+      ];
+
+      var zoom = map.getBoundsZoom(bounds);
+      zoom = Math.min(zoom, 9);
+    
+      console.log('flying to ', center);	
+      document.getElementById('address').innerText = state
+      map.flyTo(center, zoom)
+    }
+
+    return flyTo;
+  }
+
+
+  function showCoordinates () {
+
+    var siglas = {    
+	"MATO GROSSO DO SUL": 'MS', 
+	"SANTA CATARINA": 'SC',
+	"ESPIRITO SANTO": 'ES',	
+	"RIO GRANDE DO SUL": 'RS', 
+	"MATO GROSSO": 'MT',	
+	"RORAIMA": 'RR',
+	"PARAÍBA": 'PB',	
+	"PIAUÍ": 'PI',	
+	"GOIÁS": 'GO', 
+ 	"RIO GRANDE DO NORTE": 'RN',
+	"RIO DE JANEIRO": 'RJ',	
+	"PARANÁ": 'PR', 	
+	"AMAPÁ": 'AP', 
+	"SÃO PAULO": 'SP', 
+	"DISTRITO FEDERAL": 'DF', 
+	"BAHIA": 'BA', 
+	"PARÁ": 'PA', 	
+	"PERNAMBUCO": 'PE', 	
+	"MARANHÃO": 'MA', 	
+	"TOCANTINS": 'TO', 	
+	"CEARÁ": 'CE', 
+	"RONDÔNIA": 'RO', 	
+	"AMAZONAS": 'AM', 	
+	"SERGIPE": 'SE', 	
+	"MINAS GERAIS": 'MG', 	
+	"ALAGOAS": 'AL' 
+    }
+
+  	
+    var coords = {};	
+    for (state in estados) {
+        coords[siglas[state]] = [
+   	    [ estados[state][0][1], estados[state][0][0] ],
+	    [ estados[state][1][1], estados[state][1][0] ]
+        ];
+    }
+
+    for (sigla in siglas)
+	siglasArray.push(siglas[sigla]);
+    siglasArray.sort();
+
+    var coordsOrdenadas = {};	 
+    siglasArray.forEach((sigla) => coordsOrdenadas[sigla] = coords[sigla]);
+
+    document.getElementById('textbox').innerText = JSON.stringify(coordsOrdenadas);	
+   
+  }
+
+  var br = getBrazilBoundaries();
+  map.fitBounds([ 
+    [ br[0][1], br[0][0] ],
+    [ br[1][1], br[1][0] ]
+  ]);
+
+
+  console.log(estados['RIO DE JANEIRO']);
+  var flyToRJ = factoryFlyTo('RIO DE JANEIRO');
+  flyToRJ();
+  return;
+  
+  var index = 3;
+  for (state in estados) {
+    //console.log('preparing setTimeout for state ' + state);
+    setTimeout(factoryFlyTo(state), 500);
+    index+=1;
+  }
+
+  showCoordinates();
+
+
+}
+
+mostrarEstados();
+
+
+</script>
+
+
+
+</body>
+</html>
