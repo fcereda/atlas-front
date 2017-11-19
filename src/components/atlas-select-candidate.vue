@@ -40,6 +40,7 @@
 	       		:search-input.sync="searchCandidates"
 	       		nudge-bottom="20px"
 	       		@input="setFocusAddCandidate"
+	       		style="z-index:10000;"
 	       	>
 	       		<template slot="item" scope="candidato">
 	       		{{ candidato.item.nome }} ({{ candidato.item.partido }})
@@ -53,8 +54,9 @@
 	       	</v-select>
 	    </v-flex>
 
-	    <v-flex sm12 pa-0 pt-2>
-	    	<div style="text-align:right;"
+	    <v-flex sm12 pa-0 pt-2 style="display:flex;">
+	        <span pa-0 class="pa-0" style="flex:1"></span>
+	    	<span>
 	    		<v-btn 
 	    			right 
 	    			ref="addCandidate"
@@ -64,9 +66,8 @@
 	    		>Adicionar candidato&nbsp;&nbsp;<v-icon>add</v-icon>
 
 	    		</v-btn>
-	    	</div>
+	    	</span>
 	    </v-flex>		
-
 
     </v-layout>
 

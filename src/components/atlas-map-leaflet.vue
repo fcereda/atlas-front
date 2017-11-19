@@ -13,7 +13,7 @@
 
 export default {
 
-	props: [ 'uf' ],
+	props: [ 'uf', 'coords' ],
 
 	data () {
 
@@ -53,7 +53,11 @@ export default {
 
 			stateBoundaries: {"AL":[[-10.50117582170068,-38.237589446023804],[-8.813116324640603,-35.151950709597564]],"AM":[[-9.818061377887272,-73.80156832950942],[2.2466255437806737,-56.09753828307561]],"AP":[[-1.236184960729986,-54.87624215511599],[4.436728303888998,-49.87668107315433]],"BA":[[-18.347255447192623,-46.61710686569986],[-8.532807210106945,-37.34113542049852]],"CE":[[-7.857575606490638,-41.423290748337514],[-2.7844996521176384,-37.253309747822016]],"DF":[[-16.050296450045842,-48.285523719028504],[-15.500262345312745,-47.308378445650824]],"ES":[[-21.301798586613188,-41.879623009555395],[-17.8919628898678,-38.84078432468759]],"GO":[[-19.4991647389655,-53.25081246908195],[-12.395750122340338,-45.906960668176254]],"MA":[[-10.26176381868467,-48.75513142896972],[-1.0449675500081526,-41.795906404340876]],"MG":[[-22.922736870113766,-51.046094580082936],[-14.233349439377164,-39.85683295357111]],"MS":[[-24.068597447874012,-58.16850828391636],[-17.166780615695586,-50.92291286539836]],"MT":[[-18.041580757767292,-61.63340040070763],[-7.349015341893303,-50.22482294273574]],"PA":[[-9.841163563019379,-58.8983418815875],[2.591012002886835,-46.06093781153198]],"PB":[[-8.302956077627027,-38.76558203759521],[-6.025907931582328,-34.79288142984251]],"PE":[[-9.48253335801251,-41.358358451520644],[-3.8289759782339416,-32.390973457255676]],"PI":[[-10.928761366451525,-45.99428964039032],[-2.7393099048490903,-40.370511540906804]],"PR":[[-26.717114682216902,-54.61931255227314],[-22.516653528078784,-48.0235368023863]],"RJ":[[-23.368936844438963,-44.88931172981614],[-20.76322889572094,-40.9585145792582]],"RN":[[-6.982736440457561,-38.582118948605675],[-4.831540569836928,-34.96853277519552]],"RO":[[-13.693687077566501,-66.81023839317209],[-7.969301207898109,-59.77434087897784]],"RR":[[-1.5806494677588887,-64.82524272692058],[5.2718410772455755,-58.88687261636393]],"RS":[[-33.75208127059592,-57.64376682264455],[-27.082300912734233,-49.69145695525251]],"SC":[[-29.35384668022551,-53.836873860171096],[-25.955835243775773,-48.355106938357295]],"SE":[[-11.568559213142233,-38.24503995296037],[-9.515040317835222,-36.393882484042095]],"SP":[[-25.312330120754744,-53.110110774449566],[-19.779903117074248,-44.16214225280717]],"TO":[[-13.46769931726239,-50.7420687424835],[-5.168395404398332,-45.69667575421508]]},
 
-			brazilBoundaries: [],	
+			brazilBoundaries: [],
+
+			markers: null,
+
+
 
 		}
 
@@ -74,6 +78,7 @@ export default {
 				this.flyToState(this.uf.sigla)
 			}
 			else {
+				this.markers = this.removePieMarkers(this.markers)
 				this.fitBoundsToBrazil()
 			}
 
@@ -86,7 +91,19 @@ export default {
 				zoom = Math.min(this.map.getBoundsZoom(boundaries), 9)  
 				// zoom cannot be higher then 9 -- we do this because of DF's tiny size
 			this.map.setView(this.geolocations[this.uf], 7);
-		}
+		},
+
+		coords () {
+			console.log('Entrou em watch coords')	
+			console.log(this.coords)
+			if (this.coords) {
+				this.markers = this.addPieMarkers()
+			}
+			else {
+				this.markers = this.removePieMarkers(this.markers)
+			}
+
+		},
 
  	},
 
@@ -181,11 +198,86 @@ export default {
 
 		},	
 
-
 		onResize () {
 
+		},
+
+
+		addPieMarkers () {
+
+			function createLocationData (coords) {
+				var dados = {
+					colors: {
+						'MDB': 'rgba(10, 10, 16, .25)',
+						'Arena': 'rgba(128, 128, 250, .5)'
+					},
+					defaultRadius: 10,
+					points: []
+				}	
+				for (var coord in coords) {
+					dados.points.push({
+						lat: coords[coord].lat,
+						long: coords[coord].long,
+						radius: 10,
+						data: { 'MDB': 100 }
+					})
+				}
+				console.log(dados.points)
+				return dados
+			}
+
+			function convertDataToPiechartFormat (sourceData, colors) {
+			    var convertedData = [];
+			    for (var id in sourceData) {
+			      convertedData.push({
+			        name: id,
+			        value: sourceData[id],
+			        style: {
+			          fillStyle: colors[id],
+			          strokeStyle: colors[id]
+			        }
+			      });
+			    }
+			    return convertedData;
+	  	    }			
+
+			console.log('Entrou em addPieMarkers!!')
+
+			var dados = createLocationData(this.coords)
+	 		var defaultRadius = dados.defaultRadius || 20,
+			    colors = dados.colors,
+			    markers = [];
+
+			console.log(dados)    
+
+			console.log(L)
+
+ 		    dados.points.forEach((point) => {
+			    var marker = L.piechartMarker(
+			      L.latLng([point.lat, point.long]), {
+			        radius: defaultRadius, //point.radius || defaultRadius,
+			        data: convertDataToPiechartFormat(point.data, colors),
+			      }
+			    );
+			    markers.push(marker);
+			    marker.addTo(this.map);
+			});
+
+console.log('chegou até aqui, o que será que está errado?')
+			return markers;
+
+		},
+
+		removePieMarkers (markers) {
+			if (!markers || !markers.length)
+				return 
+			markers.forEach((marker) => {
+				this.map.removeLayer(marker)
+			})
+			return
 		}
-	}
+
+	}	
 }
 
 </script>

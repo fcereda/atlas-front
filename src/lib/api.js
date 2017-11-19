@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-
+const atlasURL = '/api'
 const cepespURL = '/cepesp/api/consulta'
 
 // Aux functions, private to this module
@@ -121,6 +121,34 @@ function getArrayFromCSV (data, selectedFields) {
 
 export default {
 	
+	getZoneAndCityLocations (uf) {
+		var query = addQuery(null, 'uf', uf)
+
+		return new Promise((resolve, reject) => {
+			axios.get(atlasURL + '/coordenadas' + query)
+			.then((response) => {
+				console.log('Data loaded by getZoneAndCityLocations()')
+				var data = response.data
+				// data is an array. We will convert it to a lookup table
+				if (!data || !data.length) {
+					return reject('No data')
+				}
+				var coords = {}
+				data.forEach((coord) => {
+					coords[coord.id] = coord
+				});
+				if (data && data.length) {
+					console.log(data.length, ' location coordinates found')
+				}
+				resolve(coords)
+			}) 
+			.catch((error) => {
+				console.error(error)
+				reject(error)
+			})
+		})
+	},
+
 	getVotesByZoneAndCity ({ ano, uf, cargo, numero }) {
 		var cargoETurno = getCargoETurno(cargo, uf)
 		cargo = cargoETurno.cargo
@@ -133,23 +161,26 @@ export default {
 
 		console.log(query);
 
-		axios.get(cepespURL + '/votos' + query)
-		.then((response) => {
-			console.log('Data loaded')
-			console.log(response)
-			console.log(getArrayFromCSV(response.data, {
-				'numero': 'NUMERO_CANDIDATO',
-				'ano': 'ANO_ELEICAO',
-				'turno': 'NUM_TURNO',
-				'codigoZona': 'NUM_ZONA',
-				'codigoMunicipio': 'COD_MUN_TSE',
-				'nomeMunicipio': 'NOME_MUNICIPIO',
-				'votos': 'QTDE_VOTOS',
-			}));
-		})
-		.catch((error) => {
-			console.error(error)
-		})
+		return new Promise ((resolve, reject) => {
+			axios.get(cepespURL + '/votos' + query)
+			.then((response) => {
+				console.log('Data loaded by getVotesByZoneAndCity')
+				var data = getArrayFromCSV(response.data, {
+					'numero': 'NUMERO_CANDIDATO',
+					'ano': 'ANO_ELEICAO',
+					'turno': 'NUM_TURNO',
+					'codigoZona': 'NUM_ZONA',
+					'codigoMunicipio': 'COD_MUN_TSE',
+					'nomeMunicipio': 'NOME_MUNICIPIO',
+					'votos': 'QTDE_VOTOS',
+				})
+				resolve(data)
+			})
+			.catch((error) => {
+				reject(error)
+			})
+		})	
+
 
 // http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=COD_MUN_TSE&colmns[2][search][value]=71072&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22
 

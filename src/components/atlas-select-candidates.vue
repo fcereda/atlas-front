@@ -137,7 +137,14 @@ export default {
     		this.candidatosSelecionados.push({...candidate, color: getNextColor() })
     		console.log(candidate)
     		console.log('uf: ', this.uf)
-    		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla});
+    		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
+    		.then((data) => {
+    			console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
+    			console.log(data[0])
+    		})
+    		.catch((error) => {
+    			alert('Deu pau, não sei por quê')
+    		})
 
     	},
 

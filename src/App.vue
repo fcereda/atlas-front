@@ -54,7 +54,9 @@
 
           <atlas-map 
             :uf="uf"
+            :coords="locationCoords"
             style="z-index:0;"
+
           ></atlas-map>
 
           <div 
@@ -68,6 +70,16 @@
           </div> 
 
     </v-content>
+
+    <v-snackbar
+      :timeout="5000"
+      :color="'error'"
+      v-model="snackbar.visible"
+      style="z-index:10000;"
+    >
+      {{ snackbar.text }}
+      <v-btn dark flat @click.native="snackbar.visible = false">Fechar</v-btn>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -76,6 +88,7 @@
 
 <script>
 
+  import api from './lib/api.js'
   import atlasSelectCandidates from './components/atlas-select-candidates.vue'
   import atlasMap from './components/atlas-map-leaflet.vue'
   import atlasSelectUf from './components/atlas-select-uf.vue'
@@ -94,6 +107,11 @@
       drawer: true,
       modoInicial: true,
       uf: '',
+      locationCoords: null,
+      snackbar: {
+        text: 'Erro tentando carregar coordenadas geográficas',
+        visible: false
+      }
     }),
 
     props: {
@@ -113,6 +131,15 @@
       },
 
       changeUf (uf) {
+        console.log(uf)
+        api.getZoneAndCityLocations(uf.sigla.toLowerCase())
+        .then((data) => {
+          this.locationCoords = data
+          console.log(this.locationCoords)
+        })
+        .catch((error) => {
+          this.snackbar.visible = true
+        })
         this.uf = uf
         this.modoInicial = false
       }
