@@ -37,10 +37,16 @@
         ></atlas-select-uf>
       </div>            
 
+      <div v-if="!modoInicial">
+        <atlas-display-uf
+          :uf="uf"
+        ></atlas-display-uf> 
+      </div>  
+
       <atlas-select-candidates
         v-if="!modoInicial"
-        @change-uf="changeUf">
-      </atlas-select-candidates>
+        :uf="uf"
+      ></atlas-select-candidates>
 
     </v-navigation-drawer>
 
@@ -73,13 +79,15 @@
   import atlasSelectCandidates from './components/atlas-select-candidates.vue'
   import atlasMap from './components/atlas-map-leaflet.vue'
   import atlasSelectUf from './components/atlas-select-uf.vue'
+  import atlasDisplayUf from './components/atlas-display-uf.vue'
 
   export default {
 
     components: {
       'atlas-select-candidates': atlasSelectCandidates,
       'atlas-map': atlasMap,
-      'atlas-select-uf': atlasSelectUf
+      'atlas-select-uf': atlasSelectUf,
+      'atlas-display-uf': atlasDisplayUf
     },
 
     data: () => ({

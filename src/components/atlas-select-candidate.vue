@@ -147,12 +147,6 @@ export default {
 	},	
 
 	watch: {	
-
-		searchCandidates (val) {
-			if (val) {
-				this.queryCandidates(val)
-			}	
-		}
 		
 	},		
 
@@ -162,22 +156,22 @@ export default {
 			if (year != this.year)
 				this.candidatos = []
 			this.year = year
-			//this.getCandidatesList()
+			this.getCandidatesList()
 		},
 
 		changeCargo (cargo) {
 			if (cargo != this.cargo)
 				this.candidatos = []
 			this.cargo = cargo
-			//this.getCandidatesList()
+			this.getCandidatesList()
 		},
 
 		getCandidatesList() {
 			if (!this.cargo || !this.year) {
-				this.candidatos = []
+				this.searchCandidates = []
 				return;
 			}
-			this.queryCandidates()
+			this.searchCandidates = this.queryCandidates()
 		},
 
 		addCandidate () {

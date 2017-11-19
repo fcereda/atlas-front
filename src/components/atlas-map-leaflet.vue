@@ -20,6 +20,7 @@ export default {
 		return {
 
 			map: null,
+			mapHeight: this.calcMapHeight(),
 			geolocations: {
 				'AC': [ -9.128703100254375, -70.30709995790936 ],
 				'AL': [ -9.657146073170642, -36.69477007781069 ],
@@ -61,24 +62,15 @@ export default {
 	computed: {
 
 		mapStyle () {
-			var width = document.documentElement.offsetWidth,
-				height = document.documentElement.offsetHeight
-
-			return 'width:100%;height:' + height + 'px;'	
-
-			return 'width:100%;height:100%;';	
-
-			return 'position:relative;top:0;left:0;bottom:0;right:0;'	
-
-
-			return 'width:' + width + 'px;height:' + height + 'px;'
+			return 'width:100%;height:' + this.mapHeight + 'px;'	
 		}
+
 	},
 
 	watch: {
 
 		uf () {
-			if (uf) {
+			if (this.uf) {
 				this.flyToState(this.uf.sigla)
 			}
 			else {
@@ -100,6 +92,15 @@ export default {
 
 
 	mounted () {
+		var resizeEventHandler = null
+		window.addEventListener('resize', () => {
+			if (!resizeEventHandler) {
+				resizeEventHandler = setTimeout(() => {
+					resizeEventHandler = null
+					this.mapHeight = this.calcMapHeight()
+				}, 50)
+			}
+		})
 		this.map = L.map('map', {
 			zoomDelta: 0.5,
 			zoomSnap: 0.25
@@ -139,6 +140,10 @@ export default {
 
 	methods: {
 
+		calcMapHeight () {
+			return document.documentElement.offsetHeight
+		},
+
 		calcBrazilBoundaries () {
 		    var bounds = [ [ 1000, 1000], [-1000, -1000] ]
 
@@ -154,7 +159,9 @@ export default {
 		},
 
 		fitBoundsToBrazil () {
-			this.map.fitBounds(this.calcBrazilBoundaries());
+			this.map.fitBounds(this.calcBrazilBoundaries(), {
+				paddingTopLeft: [-400, 0]
+			});
 		},
 
 		flyToState (state) {

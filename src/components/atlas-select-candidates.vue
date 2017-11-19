@@ -3,12 +3,6 @@
 <div class="select-candidates">
 	<v-container fluid>
 
-		<atlas-select-uf
-			:uf="uf"
-			@input="setUF">
-		</atlas-select-uf>
-		<p></p>
-
 		<atlas-candidate-chip
 			v-for="candidato in candidatosSelecionados"
 			:nome="candidato.nome"
@@ -58,14 +52,9 @@ export default {
 		AtlasCandidateChip
 	},
 
-	props: [],
+	props: [ 'uf' ],
 
     data: () => ({
-
-    	uf: {
-    		sigla: 'SP',
-    		nome: "São Paulo"
-    	},	
 
         headersCandidatosSelecionados: [
  		{	
