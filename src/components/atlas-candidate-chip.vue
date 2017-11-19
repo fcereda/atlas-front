@@ -1,10 +1,12 @@
 <template>
 
-		<v-chip close 
+		<v-chip 
+			close 
 			:color="color"
+			label
 			text-color="white"
 			@input="$emit('remove')"
-		>{{ nome }} ({{ partido }}) &mdash; {{ labelCargo }} {{ ano }}</v-chip>
+		><v-avatar><v-icon>{{ icone }}</v-icon></v-avatar>{{ nome }} ({{ partido }}) &mdash; {{ labelCargo }} {{ ano }}</v-chip>
 
 </template>
 
@@ -12,7 +14,7 @@
 
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color'],
+	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'tipo'],
 
 	data () {
 
@@ -37,6 +39,19 @@ export default {
 		}
 
 	},
+
+	computed: {
+
+		icone () {
+			const ICONES = {
+				'partido': 'location_city',
+				'estatistica': 'insert_chart',
+				'candidato': 'account_circle'
+			}
+			return ICONES[this.tipo || 'candidato']
+		} 
+
+	}, 
 
 	methods: {
 

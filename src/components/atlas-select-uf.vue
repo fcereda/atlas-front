@@ -9,7 +9,7 @@
               item-value="sigla"
               item-text="nome"
               v-model="uf"
-              label="Selecione uma UF para comećar..."
+              label="Para começar, escolha um estado aqui:"
               return-object
               single-line
               hide-details
@@ -108,14 +108,14 @@ export default {
     			sigla: 'RN',
     			nome: 'Rio Grande do Norte'
     		}, {
+    			sigla: 'RS',
+    			nome: 'Rio Grande do Sul'
+    		}, {    			
     			sigla: 'RO',
     			nome: 'Rondônia'
     		}, {
     			sigla: 'RR',
     			nome: 'Roraima'
-    		}, {
-    			sigla: 'RS',
-    			nome: 'Rio Grande do Sul'
     		}, {
     			sigla: 'SC',
     			nome: 'Santa Catarina'

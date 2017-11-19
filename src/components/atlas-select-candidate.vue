@@ -286,7 +286,6 @@ export default {
 	padding-left: 8px;
 	padding-right: 8px;
 	padding-bottom: 8px;
-	background-color: white;
 }
 
 </style>

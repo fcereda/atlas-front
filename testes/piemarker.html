@@ -139,21 +139,31 @@ font-size: 16px;
   border: 1px solid red;
 }
 
+.map {
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  position:absolute;
+  background:#fff;
+}
+
+
 </style>
 	
 </head>
 <body>
 
-<div id="sideba" class="sidebar-inicial">
+<div id="sidebar" class="sidebar-inicial">
   <div class="cepesp-logo-grande">
     <span>CEPESP</span>
     <span style="font-weight:100">Atlas&nbsp;Eleitoral</span>
   </div>
-  <div class="select-address" style="margin-top:64px">Para começar, escolha um estado</div>
+  <div class="select-address" style="margin-top:64px">Para começar, clique aqui e escolha um estado</div>
 </div>  
 
 
-<div id="mapid" class="nopadding" style="width: 600px; height: 400px;"></div>
+<div id="mapid" class="map nopadding"></div>
 <div id="address" class="address-bar"></div>
 <textarea id="textbox" class="textbox"></textarea>
 <script>
@@ -161,7 +171,7 @@ font-size: 16px;
 var mapDiv = document.getElementById('mapid');
 var winHeight = document.documentElement.scrollHeight
 var winWidth =  document.documentElement.scrollWidth
-mapDiv.setAttribute('style', 'width:' + winWidth + 'px;height:' + winHeight + 'px');
+//mapDiv.setAttribute('style', 'width:' + winWidth + 'px;height:' + winHeight + 'px');
 //mapDiv.setAttribute('style', 'position:absolute;left:300px;top:0;right:0;bottom:0');
 
 	
@@ -256,6 +266,25 @@ var dadosEleitorais = {
   } ] 
 };
   
+var newPoints = [];
+dadosEleitorais.points.forEach((point) => {
+  for (var i=0; i<10; i++) {
+    var newPoint = {
+      lat: point.lat,
+      long: point.long - (i / 50.0),
+      radius: point.radius,
+      data: {
+        'PMDB': Math.random(),
+        'PT': Math.random(),
+        'PSDB': Math.random(),
+        'PP': Math.random()
+      }
+    }
+    newPoints.push(newPoint)
+  }  
+})
+console.log('newPoints.length = ', newPoints.length)
+dadosEleitorais.points = newPoints;
 
 console.log('passou por aqui!')
 

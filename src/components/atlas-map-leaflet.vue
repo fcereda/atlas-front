@@ -64,6 +64,8 @@ export default {
 			var width = document.documentElement.offsetWidth,
 				height = document.documentElement.offsetHeight
 
+			return 'width:100%;height:' + height + 'px;'	
+
 			return 'width:100%;height:100%;';	
 
 			return 'position:relative;top:0;left:0;bottom:0;right:0;'	
@@ -76,8 +78,13 @@ export default {
 	watch: {
 
 		uf () {
-			console.log('uf changed to ' + this.uf)
-			this.flyToState(this.uf.sigla)
+			if (uf) {
+				this.flyToState(this.uf.sigla)
+			}
+			else {
+				this.fitBoundsToBrazil()
+			}
+
 			return
 			var boundaries = this.stateBoundaries[this.state],
 				center = [
@@ -93,19 +100,18 @@ export default {
 
 
 	mounted () {
-
 		this.map = L.map('map', {
 			zoomDelta: 0.5,
 			zoomSnap: 0.25
 		})
 		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
 			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+			attribution: 'Mapa &copy; <a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
 				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+				'Imagens © <a href="http://mapbox.com">Mapbox</a>',
 			id: 'mapbox.streets'
 		}).addTo(this.map);
-		this.map.fitBounds(this.calcBrazilBoundaries());
+		this.fitBoundsToBrazil();
 
 		return;
 
@@ -145,6 +151,10 @@ export default {
 
 		    return bounds;
 
+		},
+
+		fitBoundsToBrazil () {
+			this.map.fitBounds(this.calcBrazilBoundaries());
 		},
 
 		flyToState (state) {

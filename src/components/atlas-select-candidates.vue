@@ -172,7 +172,6 @@ export default {
 .select-candidates {
 	width: 100%;
 	margin-top: -4px;
-	background-color: #fff;
 	overflow-y: hidden;
 }	
 

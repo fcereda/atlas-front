@@ -1,38 +1,51 @@
 <template>
-  <v-app id="inspire">
+  <v-app id="inspire" dark>
     <v-navigation-drawer
-      persistent
+      dark
+      permanent
+      clipped
+      fixed
       v-model="drawer"
       width="440"
-      enable-resize-watcher
-      right
       app
     >
+
+      <div class="cepesp-logo" v-bind:class="classLogo">
+        <span>CEPESP&nbsp;</span>
+        <span style="font-weight:100">Atlas&nbsp;Eleitoral</span>
+        <span v-if="!modoInicial" style="flex:1"></span>
+        <span v-if="!modoInicial">
+            <v-tooltip bottom open-delay="200" >
+              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator" @click="goHome">
+                <v-icon>home</v-icon>
+              </v-btn>
+              <span>Voltar à tela inicial</span>
+            </v-tooltip>  
+            <v-tooltip bottom open-delay="200" z-index="10000">
+              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
+                <v-icon>save</v-icon>
+              </v-btn>
+              <span>Salvar o mapa atual</span>
+            </v-tooltip>  
+        </span>    
+      </div>
+
+      <div v-if="modoInicial">
+        <atlas-select-uf
+          :uf="uf"
+          @input="changeUf"
+        ></atlas-select-uf>
+      </div>            
+
       <atlas-select-candidates
+        v-if="!modoInicial"
         @change-uf="changeUf">
       </atlas-select-candidates>
+
     </v-navigation-drawer>
 
-    <v-toolbar color="white" class="atlas-toolbar" fixed app>
-      <v-toolbar-title>CEPESP Atlas</v-toolbar-title>
+    <v-content>
 
-      <v-spacer></v-spacer>  
-  
-      <v-tooltip right>
-        <v-btn color="primary" flat icon slot="activator"><v-icon>home</v-icon></v-btn>
-        <span>Voltar ao comeco</span>
-      </v-tooltip>
-
-      <v-tooltip right>
-        <v-btn color="primary" flat icon slot="activator"><v-icon>save</v-icon></v-btn>
-        <span>Salvar esta visualizacão</span>
-      </v-tooltip>
-             
-      <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-    </v-toolbar>
-
-    <main style="border-top:2px solid black;">
-      <v-content>
           <atlas-map 
             :uf="uf"
             style="z-index:0;"
@@ -48,11 +61,12 @@
             ></atlas-select-uf>
           </div> 
 
-      </v-content>
-    </main>
-
+    </v-content>
   </v-app>
 </template>
+
+
+
 
 <script>
 
@@ -70,6 +84,7 @@
 
     data: () => ({
       drawer: true,
+      modoInicial: true,
       uf: '',
     }),
 
@@ -77,9 +92,21 @@
       source: String
     },
 
+    computed: {
+      classLogo () {
+        return this.modoInicial ? 'cepesp-logo-grande' : 'cepesp-logo-pequeno'
+      }
+    },
+
     methods: {
+      goHome () {
+        this.modoInicial = true
+        this.uf = ''
+      },
+
       changeUf (uf) {
         this.uf = uf
+        this.modoInicial = false
       }
     }
 
@@ -90,6 +117,31 @@
 
 html { 
   overflow-y: hidden;
+}
+
+.cepesp-logo {
+    transition: all 0.2s ease;  
+    font-weight:700;
+    padding:16px;
+    color:#eee;
+    display:flex;
+}
+
+.cepesp-logo-grande {
+    font-size:48px;
+    line-height:1.0;
+    padding-top:180px;
+    flex-direction:column;
+}
+
+.cepesp-logo-pequeno {
+    font-size:22px;
+    padding-top:12px;
+}
+
+.button-logo-pequeno {
+    margin:0;
+    margin-top:-4px;
 }
 
 .atlas-toolbar {
