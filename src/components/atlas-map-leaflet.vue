@@ -13,7 +13,7 @@
 
 export default {
 
-	props: [ 'uf', 'coords' ],
+	props: [ 'uf', 'coords', 'candidates' ],
 
 	data () {
 
@@ -104,6 +104,12 @@ export default {
 			}
 
 		},
+
+		candidates () {
+			console.log('Entrou em watch candidates')
+			console.log(this.candidates)
+			this.updatePieMarkers()
+		}
 
  	},
 
@@ -205,24 +211,37 @@ export default {
 
 		addPieMarkers () {
 
-			function createLocationData (coords) {
+			function getVotes (locationId, candidates) {
+				var data = {}
+				candidates.forEach((candidate) => {
+					var votes = 0
+					if (candidate.votos[locationId])
+						votes = candidate.votos[locationId].numero || 0
+					data[candidate.numero] = parseInt(votes)   // <-- THIS IS WRONG WRONG WRONG but we're doing it because it is late and we want to see a real piechart!!
+				})
+				return data
+			}
+
+			function createLocationData (coords, candidates) {
 				var dados = {
-					colors: {
-						'MDB': 'rgba(10, 10, 16, .25)',
-						'Arena': 'rgba(128, 128, 250, .5)'
-					},
+					colors: { },
 					defaultRadius: 10,
 					points: []
 				}	
-				for (var coord in coords) {
+				var index = 0;			
+				candidates.forEach((candidate) => {
+					dados.colors[candidate.numero] = 'rgba(' + Math.floor(Math.random()*256) + ',' + Math.floor(Math.random()*256) + ',0,0.8)'
+					index++
+				}) 	
+
+				for (var id in coords) {
 					dados.points.push({
-						lat: coords[coord].lat,
-						long: coords[coord].long,
+						lat: coords[id].lat,
+						long: coords[id].long,
 						radius: 10,
-						data: { 'MDB': 100 }
+						data: getVotes(id, candidates)
 					})
 				}
-				console.log(dados.points)
 				return dados
 			}
 
@@ -243,7 +262,7 @@ export default {
 
 			console.log('Entrou em addPieMarkers!!')
 
-			var dados = createLocationData(this.coords)
+			var dados = createLocationData(this.coords, this.candidates)
 	 		var defaultRadius = dados.defaultRadius || 20,
 			    colors = dados.colors,
 			    markers = [];
@@ -275,6 +294,13 @@ console.log('chegou até aqui, o que será que está errado?')
 				this.map.removeLayer(marker)
 			})
 			return
+		},
+
+		updatePieMarkers () {
+			if (this.markers) {
+				this.removePieMarkers(this.markers)
+			}
+			this.markers = this.addPieMarkers()
 		}
 
 	}	

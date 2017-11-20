@@ -46,6 +46,8 @@
       <atlas-select-candidates
         v-if="!modoInicial"
         :uf="uf"
+        @add-candidate="addCandidate"
+        @remove-candidate="removeCandidate"
       ></atlas-select-candidates>
 
     </v-navigation-drawer>
@@ -55,6 +57,7 @@
           <atlas-map 
             :uf="uf"
             :coords="locationCoords"
+            :candidates="candidates"
             style="z-index:0;"
 
           ></atlas-map>
@@ -108,6 +111,7 @@
       modoInicial: true,
       uf: '',
       locationCoords: null,
+      candidates: [],
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
         visible: false
@@ -142,8 +146,24 @@
         })
         this.uf = uf
         this.modoInicial = false
-      }
-    }
+      },
+
+      addCandidate (candidate) {
+        console.log('*** Added a new candidate to the watch list')
+        console.log(candidate)
+        if (this.candidates.indexOf(candidate) >= 0) {
+          console.log('Candidato já fazia parte da lista')
+          return;
+        }
+        this.candidates.push(candidate)
+      },
+
+      removeCandidate (candidate) {
+        console.log('Removed a candidate from the watch list')
+        console.log(candidate)
+      },
+
+    }  
 
   }
 </script>

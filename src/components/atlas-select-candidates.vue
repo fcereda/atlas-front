@@ -10,7 +10,7 @@
 			:cargo="candidato.cargo"
 			:ano="candidato.ano"
 			:color="candidato.color"
-			@remove="removeChip(candidato)"
+			@remove="removeCandidate"
 		></atlas-candidate-chip>	
 
 	    <p></p>
@@ -122,6 +122,8 @@ export default {
     		show: true
     	}],
 
+    	votesData: {},
+
     }),
 
     methods: {
@@ -132,28 +134,38 @@ export default {
     		this.$emit('change-uf', uf.sigla)
     	},
 
-    	addCandidate (candidate) {
+    	addCandidate: function (candidate) {
 
-    		this.candidatosSelecionados.push({...candidate, color: getNextColor() })
-    		console.log(candidate)
-    		console.log('uf: ', this.uf)
+    		var color = getNextColor()
+    		this.candidatosSelecionados.push({...candidate, color})
     		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
     			console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
     			console.log(data[0])
+    			var votes = {}
+    			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
+    				var id = codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3)
+    				votes[id] = {
+    					id,
+    					numero: votos
+    				}	
+    			})
+    			this.$emit('add-candidate', {...candidate, color, votos: votes})
     		})
     		.catch((error) => {
-    			alert('Deu pau, não sei por quê')
+    			console.error(error)
     		})
 
     	},
 
-    	removeChip (candidato) {
+    	removeCandidate (candidato) {
     		var indexToRemove = this.candidatosSelecionados.indexOf(candidato);
-    		if (indexToRemove >= 0)
-    			this.candidatosSelecionados.splice(indexToRemove, 1)
+    		if (indexToRemove >= 0) {
+    			var candidate = this.candidatosSelecionados.splice(indexToRemove, 1)
+    			this.$emit('remove-candidate', candidate)
+    		}
     		else {
-    			console.log('Error trying to remove candidate from list')
+    			console.error('Error trying to remove candidate from list')
     			console.log(obj)
     		}
     	}
