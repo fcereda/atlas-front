@@ -10,6 +10,7 @@
 			:cargo="candidato.cargo"
 			:ano="candidato.ano"
 			:color="candidato.color"
+			:loading="candidato.loading"
 			@remove="removeCandidate"
 		></atlas-candidate-chip>	
 
@@ -136,8 +137,9 @@ export default {
 
     	addCandidate: function (candidate) {
 
-    		var color = getNextColor()
-    		this.candidatosSelecionados.push({...candidate, color})
+    		var color = 'black',  //'grey darken-1', //getNextColor(),
+    			candidateObj = {...candidate, color, loading: true}
+    		this.candidatosSelecionados.push(candidateObj)
     		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
     			console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
@@ -150,7 +152,9 @@ export default {
     					numero: votos
     				}	
     			})
-    			this.$emit('add-candidate', {...candidate, color, votos: votes})
+    			candidateObj.loading = false
+    			candidateObj.color = getNextColor()
+    			this.$emit('add-candidate', {...candidateObj, votos: votes})
     		})
     		.catch((error) => {
     			console.error(error)

@@ -56,10 +56,7 @@
 
           <atlas-map 
             :uf="uf"
-            :coords="locationCoords"
-            :candidates="candidates"
             style="z-index:0;"
-
           ></atlas-map>
 
           <div 
@@ -91,9 +88,10 @@
 
 <script>
 
+  import Store from './lib/store.js'
   import api from './lib/api.js'
   import atlasSelectCandidates from './components/atlas-select-candidates.vue'
-  import atlasMap from './components/atlas-map-leaflet.vue'
+  import atlasMap from './components/atlas-map-leaflet-canvas.vue'
   import atlasSelectUf from './components/atlas-select-uf.vue'
   import atlasDisplayUf from './components/atlas-display-uf.vue'
 
@@ -110,7 +108,7 @@
       drawer: true,
       modoInicial: true,
       uf: '',
-      locationCoords: null,
+//      locationCoords: null,
       candidates: [],
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
@@ -138,8 +136,12 @@
         console.log(uf)
         api.getZoneAndCityLocations(uf.sigla.toLowerCase())
         .then((data) => {
-          this.locationCoords = data
-          console.log(this.locationCoords)
+          console.error('Dados obtidos de getZoneAndCityLocations')  
+          TÁ ERRADO ISSO AQUI, PRECISAMOS QUE getZoneAndCityLocations retorne um array
+          console.log(data)
+          Store.coordenadas = data
+          //this.locationCoords = data
+          //console.log(this.locationCoords)
         })
         .catch((error) => {
           this.snackbar.visible = true
@@ -155,6 +157,7 @@
           console.log('Candidato já fazia parte da lista')
           return;
         }
+        Store.adicionarCandidato(candidate)
         this.candidates.push(candidate)
       },
 
@@ -175,7 +178,7 @@ html {
 }
 
 .cepesp-logo {
-    transition: all 0.2s ease;  
+    transition: all 0.4s ease;  
     font-weight:700;
     padding:16px;
     color:#eee;

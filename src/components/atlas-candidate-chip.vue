@@ -1,12 +1,17 @@
 <template>
 
 		<v-chip 
-			close 
+			:close="!loading" 
 			:color="color"
 			label
 			text-color="white"
-			@input="$emit('remove')"
-		><v-avatar><v-icon>{{ icone }}</v-icon></v-avatar>{{ nome }} ({{ partido }}) &mdash; {{ labelCargo }} {{ ano }}</v-chip>
+			@input="$emit('remove')">
+			<v-avatar>
+				<v-icon>{{ icone }}</v-icon>
+			</v-avatar>
+			<span>{{ nome }} ({{ partido }}) &mdash; {{ labelCargo }} {{ ano }}</span>
+			<span v-if="loading">&nbsp;&nbsp;<v-progress-circular size="20" indeterminate></v-progress-circular></span>
+		</v-chip>
 
 </template>
 
@@ -14,7 +19,7 @@
 
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'tipo'],
+	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'tipo', 'loading'],
 
 	data () {
 

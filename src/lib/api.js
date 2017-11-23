@@ -1,4 +1,5 @@
 import axios from 'axios'
+import Store from './store.js'		// *** REMOVE THIS LATER
 
 const atlasURL = '/api'
 const cepespURL = '/cepesp/api/consulta'
@@ -129,6 +130,11 @@ export default {
 			.then((response) => {
 				console.log('Data loaded by getZoneAndCityLocations()')
 				var data = response.data
+
+				//**********************************************************************	
+				Store.coordenadas = data   // MOVE THIS TO THE CORRECT PLACE, IN APP.VUE  
+				//**********************************************************************
+
 				// data is an array. We will convert it to a lookup table
 				if (!data || !data.length) {
 					return reject('No data')
@@ -174,6 +180,10 @@ export default {
 					'nomeMunicipio': 'NOME_MUNICIPIO',
 					'votos': 'QTDE_VOTOS',
 				})
+				//console.error('data')
+				//console.log(data)
+				data.forEach((row) => row.votos = parseInt(row.votos))
+
 				resolve(data)
 			})
 			.catch((error) => {
