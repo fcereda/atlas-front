@@ -1,0 +1,621 @@
+<!doctype html>
+<html>
+<head>
+    <title>Many Points with  leaflet Canvas</title>
+    <meta charset="utf-8">
+
+    <style>
+        
+        #map {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            background-color: #333;
+        }
+
+	.pointer {
+	    cursor: pointer !important;
+	}
+
+    </style>
+
+</head>
+<body>
+    <div id="map"></div>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+    <script src="L.CanvasOverlay.js"></script>
+    <script src="http://www.sumbera.com/gist/data.js" charset="utf-8"></script>
+
+
+    <script>
+
+	// icon for StackedBar: view_column
+
+        var points = data; // data loaded from data.js
+        var leafletMap = L.map('map').setView([50.00, 14.44], 9);
+        L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-lite,$fff[difference],$fff[@23],$fff[hsl-saturation@20])/{z}/{x}/{y}.png")
+            .addTo(leafletMap);
+
+	var angles = calcAngles(100);
+	console.log(angles);
+        console.log([angles[0], angles[33], angles[66], angles[100]])
+
+	for (var i=0; i<data.length; i++) {
+	    data[i].stops = [0];
+            data[i].votes = [10, 15, 25, 10].map((weight) => Math.floor(Math.random() * 1000 * weight))
+	    data[i].totalVotes = data[i].votes.reduce((total, number) => total + number, 0)
+	    if (i==10) console.log('totalVotes = ', data[i].totalVotes)
+	    // var notches = [0, Math.floor(Math.random() * 100), Math.floor(Math.random() * 100), Math.floor(Math.random() * 100), Math.floor(100.0)].sort(function(a, b){return a-b});	
+	    data[i].percentages = data[i].votes.map((votes) => votes / data[i].totalVotes)
+	    if (i==10) console.log('percentages = ', data[i].percentages)	
+	    var notches = [0]
+	    var lastPercentage = 0
+	    data[i].percentages.forEach((percentage) => {
+		lastPercentage += percentage
+		notches.push(Math.round(lastPercentage * 100))
+	    })
+	    //notches.push(100)	
+	    data[i].winner = data[i].votes.reduce((winner, votes, index, arr) => winner < 0 ? index : arr[winner] < votes ? index : winner, -1)	
+	 	
+	    data[i].stops = notches.map((notch) => angles[notch])
+	    data[i].anglesForCircleChart = data[i].votes.map((numVotes) => angles[Math.round(numVotes / data[i].votes[data[i].winner] * 100)])
+
+
+	    numOrderedVotes = 2	
+	    data[i].orderedVotes = data[i].votes.map((numVotes, index) => { 
+		return {
+   		  votes: numVotes,
+		  indexCandidato: index
+		}
+	    }).sort((a, b) => b.votes - a.votes).slice(0, numOrderedVotes)
+	    var totalOrderedVotes = data[i].orderedVotes.reduce((total, {votes}) => total + votes, 0)
+	    for (var j=0, accumulatedPercentage=0; j<data[i].orderedVotes.length; j++) {
+	        let voteObj = data[i].orderedVotes[j],
+		    percentage = voteObj.votes / totalOrderedVotes
+		accumulatedPercentage += percentage
+		data[i].orderedVotes[j] = {...data[i].orderedVotes[j], 
+		  percentage, 
+		  accumulatedPercentage, 
+		  notch: Math.round(accumulatedPercentage * 100)
+		}
+	    }	
+
+	
+	    if (i == 10){
+		console.log('printing ordered votes')
+		console.log(data[i].votes)
+		console.log(data[i].orderedVotes)
+	    }	
+
+	
+	};
+
+
+	var posicoesCharts = []
+	var onHover = function (e) {
+	    //return console.log(e)
+	    //console.log('hovering over map at (' + e.x + ', ' + e.y + ')')
+	    for (var i=posicoesCharts.length-1; i>=0; i--) {
+		var thisPosicao = posicoesCharts[i].bounds,
+		    x = e.layerX,
+		    y = e.layerY
+		if (thisPosicao[0][0] <= x &&
+		    thisPosicao[0][1] <= y &&
+		    thisPosicao[1][0] >= x &&
+		    thisPosicao[1][1] >= y) {
+		  console.log('ENCONTROU!!! index = ' + posicoesCharts[i].index)
+		  console.log(data[i].orderedVotes)
+		  if (document.getElementById('map').className.indexOf('pointer') < 0)
+		    document.getElementById('map').className += " pointer"
+		  return;
+	        }
+	    }	
+	    document.getElementById('map').className = document.getElementById('map').className.replace(" pointer", '')	
+	}	
+	document.getElementById('map').addEventListener('mouseover', onHover)
+	document.getElementById('map').addEventListener('mousemove', onHover)
+
+
+        var myCanvas = L.canvasOverlay()
+            .drawing(drawChartFactory('pie'))
+            .addTo(leafletMap);
+
+
+        function calcAngles (numNotches = 100) {
+	    var angles = [0]
+            for (var i=1; i<=numNotches; i++) {
+		angles.push(Math.PI * 2 * (i / numNotches))
+            }
+	    return angles;
+	}
+
+
+
+        function drawingOnCanvas(canvasOverlay, params) {
+            var radius = Math.pow(2, leafletMap.getZoom() / 3),
+		ctx = params.canvas.getContext('2d');
+
+	    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+	    var colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)')
+
+
+            ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+            //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+	    console.log(data.length + ' points');
+            for (var i = 0; i < 5000; i++) {
+                var d = data[i];
+                if (params.bounds.contains([d[0], d[1]])) {
+                    var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+		    for (var j=0; j<d.stops.length-1; j++) {
+			ctx.beginPath();
+			ctx.moveTo(dot.x, dot.y);	
+			if (i == 10) {
+				console.log(d.stops[j], d.stops[j+1], colors[j])
+			}
+			ctx.arc(dot.x, dot.y, radius, d.stops[j], d.stops[j+1]);		
+	                ctx.fillStyle = colors[j];
+	                ctx.fill();
+                        ctx.closePath();
+		    }	
+                }
+            }
+        };
+
+
+        function drawDonutChart(canvasOverlay, params) {
+            var radius = Math.pow(2, leafletMap.getZoom() / 3),
+		ctx = params.canvas.getContext('2d');
+
+	    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+	    var colors = colorSequence.map((color) => 'rgba(' + color + ',1)')
+
+
+            ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+            //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+	    console.log(data.length + ' points');
+            for (var i = 0; i < 5000; i++) {
+                var d = data[i];
+                if (params.bounds.contains([d[0], d[1]])) {
+                    var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+		    for (var j=0; j<d.stops.length-1; j++) {
+			ctx.beginPath();
+			//ctx.moveTo(dot.x, dot.y);	
+			if (i == 10) {
+				console.log(d.stops[j], d.stops[j+1], colors[j])
+			}
+			ctx.arc(dot.x, dot.y, radius * 3/ 4, d.stops[j], d.stops[j+1]);		
+	                ctx.strokeStyle = colors[j]
+			ctx.lineWidth = radius / 2
+	                ctx.stroke();
+                        ctx.closePath();
+		    }	
+                }
+            }
+        };
+
+
+        function drawDonutChart2(canvasOverlay, params) {
+            var radius = Math.pow(2, leafletMap.getZoom() / 3),
+		ctx = params.canvas.getContext('2d');
+
+	    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+	    var colors = colorSequence.map((color) => 'rgba(' + color + ',1)')
+
+
+            ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+            //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+	    console.log(data.length + ' points');
+	    posicoesCharts = []
+            for (var i = 0; i < 5000; i++) {
+                var d = data[i];
+                if (params.bounds.contains([d[0], d[1]])) {
+                    var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+		    for (var j=0, lastAngle=0; j<d.orderedVotes.length; j++) {
+			ctx.beginPath();
+			//ctx.moveTo(dot.x, dot.y);	
+			if (i == 10) {
+				console.log(d.orderedVotes[j])
+			}
+			angle = angles[d.orderedVotes[j].notch]
+			ctx.arc(dot.x, dot.y, radius * 3/ 4, lastAngle, angle);		
+	                ctx.strokeStyle = colors[d.orderedVotes[j].indexCandidato]
+			ctx.lineWidth = radius / 2
+	                ctx.stroke();
+                        ctx.closePath();
+			lastAngle = angle
+		    }	
+            	    posicoesCharts.push([
+		      [dot.x - radius, dot.y - radius],
+		      [dot.x + radius, dot.y + radius]
+  	   	    ])			
+                }
+            }
+        };
+
+
+
+	// MELHOR NÃO UTILIZAR O GRÁFICO ABAIXO, NÃO TRANSMITE MUITA INFORMAÇÃO
+
+        function drawGridChart(canvasOverlay, params) {
+            var radius = Math.pow(2, leafletMap.getZoom() / 3),
+		ctx = params.canvas.getContext('2d');
+
+	    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+	    var colors = colorSequence.map((color) => 'rgba(' + color + ',1)')
+
+
+            ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+            //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+	    console.log(data.length + ' points');
+            for (var i = 0; i < 5000; i++) {
+                var d = data[i];
+                if (params.bounds.contains([d[0], d[1]])) {
+                    var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+
+		    for (var k=0, j=0, count=1; k<4; k++)
+		      for (var l=0; l<4; l++, count++) {
+			ctx.beginPath()
+			ctx.fillStyle = colors[j]
+			ctx.fillRect(dot.x + radius/4*k, dot.y+radius/4*l, radius/4, radius/4)
+			ctx.closePath()
+			if (count/16 > d.percentages[j]) {
+                          count=1 
+			  j++
+                        } 
+		      }	    	
+/*
+
+		    for (var j=0; j<d.stops.length-1; j++) {
+			ctx.beginPath();
+			//ctx.moveTo(dot.x, dot.y);	
+			if (i == 10) {
+				console.log(d.stops[j], d.stops[j+1], colors[j])
+			}
+			ctx.arc(dot.x, dot.y, radius * 3/ 4, d.stops[j], d.stops[j+1]);		
+	                ctx.strokeStyle = colors[j]
+			ctx.lineWidth = radius / 2
+	                ctx.stroke();
+                        ctx.closePath();
+		    }	
+*/
+                }
+            }
+        };
+
+
+        function drawingOnCanvas2(canvasOverlay, params) {
+            var radius = Math.pow(2, leafletMap.getZoom() / 3),
+		ctx = params.canvas.getContext('2d');
+
+	    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+	    var colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)')
+
+
+            ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+            //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+	    console.log(data.length + ' points');
+            for (var i = 0; i < 5000; i++) {
+                var d = data[i];
+		var winner = data[i].winner
+		var color = colors[winner]
+	        if (i >= 10 && i <= 20) console.log('winner = ', winner)
+                if (params.bounds.contains([d[0], d[1]])) {
+                    var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+		    for (var j=0; j<d.stops.length-1; j++) {
+			ctx.beginPath();
+			ctx.moveTo(dot.x, dot.y);	
+			if (i == 10) {
+				console.log(d.stops[j], d.stops[j+1], colors[j])
+			}
+			ctx.arc(dot.x, dot.y, radius, d.stops[j], d.stops[j+1]);		
+	                ctx.fillStyle = color //colors[j];
+	                ctx.fill();
+                        ctx.closePath();
+		    }	
+                }
+            }
+        };
+
+  function drawCircleWinner (canvasOverlay, params) {
+    var radius = Math.pow(2, leafletMap.getZoom() / 3),
+	ctx = params.canvas.getContext('2d'),
+        colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+	colors = colorSequence.map((color) => 'rgba(' + color + ',')
+
+    ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+ 
+    console.log(data.length + ' points');
+    for (var i = 0; i < data.length; i+=4) {
+      var d = data[i];
+      if (params.bounds.contains([d[0], d[1]])) {    
+        var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]),
+	    color = colors[d.winner] + d.percentages[d.winner] + ')' 
+
+        ctx.beginPath()
+        ctx.moveTo(dot.x, dot.y)
+        ctx.arc(dot.x, dot.y, radius, 0, Math.PI * 2)
+        ctx.fillStyle = color
+        ctx.fill()
+        ctx.closePath()
+      }
+    }
+  }
+
+
+  function drawCircleChart (canvasOverlay, params) {
+    var radius = Math.pow(2, leafletMap.getZoom() / 3) / 2,
+        lineWidth = radius / 4,
+	ctx = params.canvas.getContext('2d'),
+        colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+	colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)')
+ 
+   ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+   //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+   console.log(data.length + ' points');
+   for (var i = 0; i < 5000; i++) {
+     var d = data[i];
+     if (i==10)
+	console.log(d)	
+
+
+     if (params.bounds.contains([d[0], d[1]])) {    
+       var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]); 
+       for (var j=0; j<d.anglesForCircleChart.length; j++) { 
+         let angle = d.anglesForCircleChart[j],
+	     thisRadius = radius+j*lineWidth
+         if (i == 10) {
+           console.log('Drawing CircleChart for angle ' + angle)
+         }
+
+         ctx.beginPath()
+         ctx.moveTo(dot.x + thisRadius, dot.y)
+         ctx.arc(dot.x, dot.y, thisRadius, 0, angle)
+         ctx.strokeStyle = colors[j]
+	 ctx.lineWidth = lineWidth
+	 ctx.stroke()
+         ctx.closePath()          
+       }
+     }   
+   }
+  }
+
+
+  function drawChartFactory (chartType) {
+
+    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+	colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)'),
+	radius = 20,
+        lineWidth = 4,
+	drawFunction = null;
+
+    var drawPieChart = function (ctx, dot, d, index) {
+	ctx.beginPath();
+	ctx.moveTo(dot.x, dot.y);	
+	ctx.arc(dot.x, dot.y, radius, d.stops[index], d.stops[index+1]);		
+	ctx.fillStyle = colors[index];
+	ctx.fill();
+        ctx.closePath();
+    }
+
+    var drawDonutChart = function (ctx, dot, d, index) {
+	ctx.beginPath();
+	ctx.arc(dot.x, dot.y, radius * 3/ 4, d.stops[index], d.stops[index+1]);		
+        ctx.strokeStyle = colors[index]
+        ctx.lineWidth = radius / 2
+        ctx.stroke();
+        ctx.closePath();
+    }
+    
+    var drawCircleChart = function (ctx, dot, d, index) {
+        var thisRadius = radius + index * lineWidth,
+	    angle = d.anglesForCircleChart[index]	
+	ctx.beginPath()
+        ctx.moveTo(dot.x + thisRadius, dot.y)
+	ctx.arc(dot.x, dot.y, thisRadius, 0, angle)
+	ctx.strokeStyle = colors[index]
+	ctx.lineWidth = lineWidth
+	ctx.stroke()	
+	ctx.closePath()
+    }
+
+    var drawWinnerChart = function (ctx, dot, d, index) {
+	if (index == d.winner) {
+            ctx.beginPath()
+            ctx.moveTo(dot.x, dot.y)
+            ctx.arc(dot.x, dot.y, radius, 0, Math.PI * 2)
+            ctx.fillStyle = colors[index]
+            ctx.fill()
+            ctx.closePath()
+        }
+    }
+
+    var drawBarChart = function (ctx, dot, d, index) {
+        let angle = d.anglesForCircleChart[index],
+            percentage = d.percentages[index],
+            thisRadius = radius + index * 2,
+	    barWidth = radius * 2 / d.percentages.length
+
+        ctx.beginPath()
+        ctx.moveTo(dot.x - radius + index*barWidth, dot.y + radius)
+        ctx.lineTo(dot.x - radius + index*barWidth, dot.y + radius - radius * 2 * percentage)
+        ctx.strokeStyle = colors[index]
+        ctx.lineWidth = barWidth
+        ctx.stroke()
+        ctx.closePath()   
+    }
+
+    const functionsByChartType = {
+	'bar'   : drawBarChart,
+        'circle': drawCircleChart,
+	'donut' : drawDonutChart,
+	'pie'   : drawPieChart,
+	'winner': drawWinnerChart,
+    }	    
+
+    function drawChart (canvasOverlay, params) {
+        var ctx = params.canvas.getContext('2d')
+
+	radius = Math.pow(2, leafletMap.getZoom() / 3)
+	lineWidth = radius / 4
+ 
+        ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+        console.log(data.length + ' points');
+	posicoesCharts = []
+        for (var i = 0; i < 5000; i++) {
+            var d = data[i];
+	
+ 	    if (params.bounds.contains([d[0], d[1]])) {    
+                let dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]); 
+	        for (var j = 0; j < d.votes.length; j++) {
+		    drawFunction(ctx, dot, d, j)
+                }
+      	        posicoesCharts.push({ 
+		    index: i,
+                    bounds: [
+		      [dot.x - radius, dot.y - radius],
+		      [dot.x + radius, dot.y + radius]
+  	   	    ]
+                })			
+            }
+        }    
+    }   
+
+    drawFunction = functionsByChartType[chartType]
+    if (drawFunction) {
+	console.log('returning a function')
+	console.log(drawFunction)
+        return drawChart
+    }	
+    return null	
+  }
+
+
+
+
+  function drawBarChart (canvasOverlay, params) {
+    var radius = Math.pow(2, leafletMap.getZoom() / 3),
+	ctx = params.canvas.getContext('2d'),
+        colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+
+	colorSequence = ['241,238,246', '189,201,225', '116,169,207', '43,140,190', '4,90,141']
+
+	colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)')
+ 
+   ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+   //ctx.fillStyle = "rgba(255,116,0, 0.2)";
+ 
+   console.log(data.length + ' points');
+   for (var i = 0; i < data.length; i+=10) {
+     var d = data[i];
+     if (i==10)
+	console.log(d)	
+
+
+     if (params.bounds.contains([d[0], d[1]])) {    
+       var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]); 
+       var barWidth = radius * 2 / d.percentages.length
+       for (var j=0; j<d.anglesForCircleChart.length; j++) { 
+         let angle = d.anglesForCircleChart[j],
+	     percentage = d.percentages[j],
+	     thisRadius = radius+j*2
+         if (i == 10) {
+           console.log('Drawing CircleChart for angle ' + angle)
+         }
+
+         ctx.beginPath()
+         ctx.moveTo(dot.x - radius + j*barWidth, dot.y + radius)
+	 ctx.lineTo(dot.x - radius + j*barWidth, dot.y + radius - radius * 2 * percentage)
+         ctx.strokeStyle = colors[j]
+	 ctx.lineWidth = barWidth
+	 ctx.stroke()
+         ctx.closePath()          
+       }
+     }   
+   }
+  }
+
+  function drawStackedBarChart (canvasOverlay, params) {
+    var radius = Math.pow(2, leafletMap.getZoom() / 3),
+	ctx = params.canvas.getContext('2d'),
+        colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+	colors = colorSequence.map((color) => 'rgb(' + color + ')')
+
+    ctx.clearRect(0, 0, params.canvas.width, params.canvas.height)
+
+    for (var i=0; i < data.length; i++) {
+      let d = data[i]
+      //if (i==10) {
+
+
+      //console.log('now showing data[10]')
+      //console.log(d)
+      if (params.bounds.contains([d[0], d[1]])) {
+	var dot = canvasOverlay._map.latLngToContainerPoint([d[0], d[1]]);
+        var width = radius * 2
+
+/*
+        ctx.beginPath()
+        ctx.strokeStyle='rgb(192, 192, 192)'
+        ctx.strokeRect(dot.x - radius, dot.y - radius / 2, width, radius)
+        ctx.closePath
+*/
+        for (var j=0, percentage=0; j<d.percentages.length; j++) {
+            let newPercentage = percentage + d.percentages[j]
+            ctx.beginPath()
+	    //console.log('x = ', - radius + width * percentage, ' width = ', width * d.percentages[j])
+	    ctx.fillStyle = colors[j]
+            ctx.fillRect(
+		dot.x - radius + width * percentage, 
+		dot.y - radius / 2, 
+		width * d.percentages[j], 
+		radius)
+
+	    //console.log(colors[j])
+            //ctx.fill()
+	    ctx.closePath()
+	    percentage = newPercentage
+        }
+      }
+      //}	
+    }
+  }            
+       
+
+    
+setTimeout(() => {
+  myCanvas.drawing(drawChartFactory('bar'))
+  leafletMap.removeLayer(myCanvas)
+  myCanvas.addTo(leafletMap)
+}, 10000)
+
+
+/*
+
+
+setTimeout(() => {
+  setInterval(() => {
+    myCanvas.drawing(drawingOnCanvas)
+    leafletMap.removeLayer(myCanvas)
+    myCanvas.addTo(leafletMap)
+  }, 4000)
+}, 2000)
+
+setInterval(() => {
+	myCanvas.drawing(drawingOnCanvas2)
+	leafletMap.removeLayer(myCanvas)
+	myCanvas.addTo(leafletMap)
+	//leafletMap._onResize();   // force redraw
+}, 4000)
+
+*/
+
+    </script>
+</body>
+</html>

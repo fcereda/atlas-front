@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Draw points with  L.CanvasLayer.js</title>
+    <meta charset="utf-8">
+
+    <style>
+          html, body {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            background: rgb(14, 21, 30);
+            height: 100%;
+            font-family: Verdana, Geneva, Lucida, Arial, Helvetica,Lucida Console, Monaco, monospace;
+            font-size: 100%;
+          
+        }
+        #map {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            background-color: #ddd;
+	    z-index:1;
+        }
+
+	#controls {
+	    position: absolute;
+	    background-color: white;	
+	    border: 2px solid #888;
+	    right: 12px;
+	    top: 12px;
+	    padding: 4px;
+	    cursor: pointer;
+	    z-index:100;
+	}
+
+	.pointer {
+	    cursor: pointer !important;
+	}
+
+
+    </style>
+
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+
+</head>
+<body>
+    <div id="map"></div>
+    <div id="controls">
+	<div onclick="changeChart('pie')"><i class="material-icons">pie_chart</i></div>
+	<div onclick="changeChart('bar')"><i class="material-icons">equalizer</i></div>
+	<div onclick="changeChart('bar')"><i class="material-icons">graphic_eq</i></div>
+	<div onclick="changeChart('hbar')"><i class="material-icons">format_align_left</i></div>
+	<div onclick="changeChart('donut')"><i class="material-icons">donut_large</i></div>
+	<div onclick="changeChart('winner')"><i class="material-icons">fiber_manual_record</i></div>
+	<div onclick="changeChart('circle')"><i class="material-icons">track_changes</i></div>
+	<div onclick="changeChart('star')"><i class="material-icons">games</i></div>
+	<div onclick="changeChart('onetwo')"><i class="material-icons">pause</i></div>
+	<div onclick="changeChart('leaf')"><i class="material-icons">open_with</i></div>
+	<div onclick="changeChart('pyramid')"><i class="material-icons">filter_list</i></div>
+	<div onclick="changeChart('bubble')"><i class="material-icons">bubble_chart</i></div>
+    </div>	
+
+<!--
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"
+    integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"
+    integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg=="
+    crossorigin=""></script>
+-->
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+  integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+  integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+  crossorigin=""></script>
+    
+    <script src="L.CanvasLayer.js"></script>
+    <script src="http://www.sumbera.com/gist/data.js" charset="utf-8"></script>
+
+
+    <script>
+
+// *** INITIALIZE ALL THE DATA
+
+	console.log('starting calculations...')
+
+        var points = data; // data loaded from data.js
+/*
+        var leafletMap = L.map('map').setView([50.00, 14.44], 9);
+        L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-lite,$fff[difference],$fff[@23],$fff[hsl-saturation@20])/{z}/{x}/{y}.png")
+            .addTo(leafletMap);
+*/
+	var angles = calcAngles(100);
+	console.log(angles);
+        console.log([angles[0], angles[33], angles[66], angles[100]])
+
+
+        var votesPerCandidate = new Array(4).fill(0)
+
+	for (var i=0; i<data.length; i++) {
+	    data[i].stops = [0];
+            data[i].votes = [10, 15, 25, 10].map((weight) => Math.floor(Math.random() * 1000 * weight))
+            for (var j=0; j<data[i].votes.length; j++)
+		votesPerCandidate[j] += data[i].votes[j]
+	    data[i].totalVotes = data[i].votes.reduce((total, number) => total + number, 0)
+	    if (i==10) console.log('totalVotes = ', data[i].totalVotes)
+	    // var notches = [0, Math.floor(Math.random() * 100), Math.floor(Math.random() * 100), Math.floor(Math.random() * 100), Math.floor(100.0)].sort(function(a, b){return a-b});	
+	    data[i].percentages = data[i].votes.map((votes) => votes / data[i].totalVotes)
+	    if (i==10) console.log('percentages = ', data[i].percentages)	
+	    var notches = [0]
+	    var lastPercentage = 0
+	    data[i].percentages.forEach((percentage) => {
+		lastPercentage += percentage
+		notches.push(Math.round(lastPercentage * 100))
+	    })
+	    data[i].notches = notches
+	    //notches.push(100)	
+	    data[i].winner = data[i].votes.reduce((winner, votes, index, arr) => winner < 0 ? index : arr[winner] < votes ? index : winner, -1)	
+	 	
+	    data[i].stops = notches.map((notch) => angles[notch])
+	    data[i].anglesForCircleChart = data[i].votes.map((numVotes) => angles[Math.round(numVotes / data[i].votes[data[i].winner] * 100)])
+
+
+	    data[i].orderedVotes = data[i].percentages.map((percentage, index) => { 
+		return {
+   		  percentage,
+		  indexCandidato: index
+		}
+	    }).sort((a, b) => (b.percentage - a.percentage) * 100)
+
+
+	    data[i].posicoes = data[i].orderedVotes.reduce((ordemArr, { indexCandidato }, index) => {
+		ordemArr[indexCandidato] = index
+		return ordemArr
+	    }, new Array(data[i].orderedVotes.length))	
+
+	    if (i==10) {
+		console.log('just checking:')
+		console.log(data[i].orderedVotes)
+		console.log(data[i].posicoes)
+	    } 
+
+
+	    var averageVotes = votesPerCandidate.map((votes) => votes / data.length)
+	    
+
+/*
+	    var totalOrderedVotes = data[i].orderedVotes.reduce((total, {votes}) => total + votes, 0)
+	    for (var j=0, accumulatedPercentage=0; j<data[i].orderedVotes.length; j++) {
+	        let voteObj = data[i].orderedVotes[j],
+		    percentage = voteObj.votes / totalOrderedVotes
+		accumulatedPercentage += percentage
+		data[i].orderedVotes[j] = {...data[i].orderedVotes[j], 
+		  percentage, 
+		  accumulatedPercentage, 
+		  notch: Math.round(accumulatedPercentage * 100)
+		}
+	    }	
+
+
+
+	    numOrderedVotes = 2	
+	    data[i].orderedVotes = data[i].votes.map((numVotes, index) => { 
+		return {
+   		  votes: numVotes,
+		  indexCandidato: index
+		}
+	    }).sort((a, b) => b.votes - a.votes).slice(0, numOrderedVotes)
+	    var totalOrderedVotes = data[i].orderedVotes.reduce((total, {votes}) => total + votes, 0)
+	    for (var j=0, accumulatedPercentage=0; j<data[i].orderedVotes.length; j++) {
+	        let voteObj = data[i].orderedVotes[j],
+		    percentage = voteObj.votes / totalOrderedVotes
+		accumulatedPercentage += percentage
+		data[i].orderedVotes[j] = {...data[i].orderedVotes[j], 
+		  percentage, 
+		  accumulatedPercentage, 
+		  notch: Math.round(accumulatedPercentage * 100)
+		}
+	    }	
+*/
+	
+	    if (i == 10){
+		console.log('printing ordered votes')
+		console.log(data[i].votes)
+		console.log(data[i].orderedVotes)
+	    }	
+
+	
+	};
+
+
+	console.log('calculations done')
+
+	var posicoesCharts = []
+	var onHover = function (e) {
+	    //return console.log(e)
+	    //console.log('hovering over map at (' + e.x + ', ' + e.y + ')')
+	    for (var i=posicoesCharts.length-1; i>=0; i--) {
+		var thisPosicao = posicoesCharts[i].bounds,
+		    x = e.layerX,
+		    y = e.layerY
+		if (thisPosicao[0][0] <= x &&
+		    thisPosicao[0][1] <= y &&
+		    thisPosicao[1][0] >= x &&
+		    thisPosicao[1][1] >= y) {
+		  console.log('ENCONTROU!!! index = ' + posicoesCharts[i].index)
+		  console.log(data[i].orderedVotes)
+		  if (document.getElementById('map').className.indexOf('pointer') < 0)
+		    document.getElementById('map').className += " pointer"
+		  return;
+	        }
+	    }	
+	    document.getElementById('map').className = document.getElementById('map').className.replace(" pointer", '')	
+	}	
+	document.getElementById('map').addEventListener('mouseover', onHover)
+	document.getElementById('map').addEventListener('mousemove', onHover)
+
+
+/*
+        var myCanvas = L.canvasOverlay()
+            .drawing(drawChartFactory('pie'))
+            .addTo(leafletMap);
+*/
+
+        function calcAngles (numNotches = 100) {
+	    var angles = [0]
+            for (var i=1; i<=numNotches; i++) {
+		angles.push(Math.PI * 2 * (i / numNotches))
+            }
+	    return angles;
+	}
+
+
+
+
+// **** OBJECT THAT CONTAINS THE DRAWING FUNCTION
+
+
+
+var myChart = {
+
+  drawChartFactory: function (chartType) {
+
+    var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+	colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)'),
+	radius = 20,
+        lineWidth = 4,
+	drawFunction = null;
+
+    var drawPieChart = function (ctx, dot, d, index) {
+	ctx.beginPath();
+	ctx.moveTo(dot.x, dot.y);	
+	ctx.arc(dot.x, dot.y, radius, d.stops[index], d.stops[index+1]);		
+	ctx.fillStyle = colors[index];
+	ctx.fill();
+        ctx.closePath();
+    }
+
+    var drawDonutChart = function (ctx, dot, d, index) {
+	ctx.beginPath();
+	ctx.arc(dot.x, dot.y, radius * 3/ 4, d.stops[index], d.stops[index+1]);		
+        ctx.strokeStyle = colors[index]
+        ctx.lineWidth = radius / 2
+        ctx.stroke();
+        ctx.closePath();
+    }
+    
+    var drawCircleChart = function (ctx, dot, d, index) {
+        var thisRadius = radius + (index - 2) * lineWidth,
+	    angle = d.anglesForCircleChart[index]	
+	ctx.beginPath()
+        ctx.moveTo(dot.x + thisRadius, dot.y)
+	ctx.arc(dot.x, dot.y, thisRadius, 0, angle)
+	ctx.strokeStyle = colors[index]
+	ctx.lineWidth = lineWidth
+	ctx.stroke()	
+	ctx.closePath()
+    }
+
+    var drawWinnerChart = function (ctx, dot, d, index) {
+	if (index == d.winner) {
+            ctx.beginPath()
+            ctx.moveTo(dot.x, dot.y)
+            ctx.arc(dot.x, dot.y, radius, 0, Math.PI * 2)
+            ctx.fillStyle = colors[index]
+            ctx.fill()
+            ctx.closePath()
+        }
+    }
+
+    var drawBarChart = function (ctx, dot, d, index) {
+        let angle = d.anglesForCircleChart[index],
+            percentage = d.percentages[index],
+            thisRadius = radius + index * 2,
+	    barWidth = radius * 2 / d.percentages.length
+
+        ctx.beginPath()
+        ctx.moveTo(dot.x - radius + index*barWidth, dot.y + radius)
+        ctx.lineTo(dot.x - radius + index*barWidth, dot.y + radius - radius * 2 * percentage)
+        ctx.strokeStyle = colors[index]
+        ctx.lineWidth = barWidth
+        ctx.stroke()
+        ctx.closePath()   
+    }
+
+    var drawHorizontalBarChart = function (ctx, dot, d, index) {
+        let percentage = d.percentages[index],
+	    percentageWinner = d.percentages[d.winner],
+            barHeight = Math.min(radius * 2 / d.percentages.length, radius / 3),
+            position = - radius + index * barHeight
+        
+	ctx.beginPath()
+	ctx.moveTo(dot.x - radius, dot.y + position)
+	ctx.lineTo(dot.x - radius + radius * 2 * (percentage / percentageWinner), dot.y + position)
+	ctx.strokeStyle = colors[index]
+	ctx.lineWidth = barHeight
+	ctx.stroke()
+	ctx.closePath()
+    }
+
+    var drawPyramidChart = function (ctx, dot, d, index) {
+        let percentage = d.percentages[index],
+            percentageWinner = d.percentages[d.winner],
+	    percentageToWinner = percentage / percentageWinner,
+            barHeight = Math.min(radius * 2 / d.percentages.length, radius / 3),
+            position = d.posicoes[index] * barHeight,
+	    width = radius * 2 * percentageToWinner
+
+	ctx.beginPath()
+	ctx.moveTo(dot.x - (width / 2), dot.y + position)
+	ctx.lineTo(dot.x + (width / 2), dot.y + position)
+	ctx.strokeStyle = colors[index]
+	ctx.lineWidth = barHeight
+	ctx.stroke()
+	ctx.closePath()
+    }
+
+    var drawBubbleChart = function (ctx, dot, d, index) {
+        let thisRadius = Math.max(radius, radius / 3 * d.percentages.length),
+	    percentage = Math.round(d.percentages[index] * 100),
+	    notch = d.notches[index],
+	    bubbleRadius = percentage / 100 * thisRadius
+            position = (notch + percentage / 2) * thisRadius * 2 / 100
+
+        
+	ctx.beginPath()
+	ctx.moveTo(dot.x - radius + position, dot.y)
+	ctx.arc(dot.x - thisRadius + position, dot.y, bubbleRadius, 0, Math.PI * 2)
+	ctx.fillStyle = colors[index]
+	ctx.fill()
+	ctx.closePath()
+
+    }
+
+
+    var drawFirstAndSecond = function (ctx, dot, d, index) {
+	var votingPosition = d.posicoes[index]
+	if (votingPosition >= 2)
+	    return
+
+        var left, width,
+	    totalPercentage = d.orderedVotes[0].percentage + d.orderedVotes[1].percentage,
+	    percentage = d.percentages[index] / totalPercentage
+
+        if (votingPosition)	
+	    // Candidate is the 2nd place; his bar will be displayed at the right
+	    left = -radius + (1-percentage) * radius * 2
+	else 
+	    // Candidate is the winner. his bar will be displayed on the left
+	    left = -radius
+	width = percentage * radius * 2
+
+
+if (percentage > 1) {
+	console.error('percentage > 1')
+	console.log(`votingPosition = ` + votingPosition + 
+`d.percentages[d.posicoes[0]] = ` + d.percentages[d.posicoes[0]] + 
+`d.percentages[d.posicoes[1]] = ` + d.percentages[d.posicoes[1]] +
+`totalPercentage = ` + totalPercentage)
+console.log(d.posicoes)
+console.log(d.percentages)
+}
+
+
+	//console.log('left = ', left, ', right = ', right)
+	        
+   	ctx.beginPath()
+	ctx.fillStyle = colors[index]	
+	ctx.fillRect(dot.x + left, dot.y - radius * (3/8), width, radius * (6/8))
+	ctx.closePath()
+    }
+
+    var drawStarChart = function (ctx, dot, d, index) {
+        let angle = angles[Math.round(index / d.percentages.length * 100)],
+	    intensity = 1,
+	    lineWidth = radius / 3
+
+        ctx.beginPath()
+        ctx.moveTo(dot.x, dot.y)
+        ctx.strokeStyle = colors[index]
+	ctx.lineWidth = lineWidth
+	ctx.arc(dot.x, dot.y, radius + (intensity - 0.5) * radius / 2, angle, angle+0.01)
+        ctx.stroke()
+        ctx.closePath()  
+    }
+
+
+    // NOT SURE THIS REALLY WORKS, INFORMATION IS QUITE DIFFICULT TO VISUALIZE
+    var drawCloverLeafChart  = function (ctx, dot, d, index) {
+        let numCandidates = d.percentages.length,
+	    startAngle = angles[Math.round(index / numCandidates * 100) + 2],
+	    endAngle = angles[Math.round((index+1) / numCandidates * 100) - 2],
+	    intensity = d.votes[index] / averageVotes[index],
+	    thisRadius = radius * intensity
+	
+	ctx.beginPath();
+	ctx.moveTo(dot.x, dot.y);	
+	ctx.arc(dot.x, dot.y, thisRadius, startAngle, endAngle);		
+	ctx.fillStyle = colors[index];
+	ctx.lineStyle = 'none'
+	ctx.fill();
+        ctx.closePath();
+    }
+
+
+    const functionsByChartType = {
+	'bar'   : drawBarChart,
+	'hbar'   : drawHorizontalBarChart,
+        'circle' : drawCircleChart,
+	'donut'  : drawDonutChart,
+	'pie'    : drawPieChart,
+	'winner' : drawWinnerChart,
+	'onetwo' : drawFirstAndSecond,
+	'star'   : drawStarChart,
+	'leaf'   : drawCloverLeafChart,
+	'pyramid': drawPyramidChart,
+	'bubble' : drawBubbleChart 
+    }	    
+
+    function drawChart (params) {
+        var ctx = params.canvas.getContext('2d')
+
+	radius = Math.pow(2, leafletMap.getZoom() / 3)
+	radius = Math.pow(2, params.zoom / 3)
+	lineWidth = radius / 4
+ 
+        ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+        console.log(data.length + ' points');
+	posicoesCharts = []
+        for (var i = 0; i < 5000; i++) {
+            var d = data[i];
+	
+ 	    if (params.bounds.contains([d[0], d[1]])) {    
+                let dot = params.layer._map.latLngToContainerPoint([d[0], d[1]]); 
+	        for (var j = 0; j < d.votes.length; j++) {
+		    drawFunction(ctx, dot, d, j)
+                }
+      	        posicoesCharts.push({ 
+		    index: i,
+                    bounds: [
+		      [dot.x - radius, dot.y - radius],
+		      [dot.x + radius, dot.y + radius]
+  	   	    ]
+                })			
+            }
+        }    
+    }   
+
+    drawFunction = functionsByChartType[chartType]
+    if (drawFunction) {
+	// drawChart() is only valid if drawFunction != null, as 
+	// the function stored in drawFunction is called by drawChart()
+        return drawChart
+    }	
+    return null	
+  },
+
+
+  setChartType: function (chartType) {
+	this.onDrawLayer = this.drawChartFactory(chartType)
+
+  }
+
+}
+
+var myCanvas;
+
+
+function changeChart (chartType) {
+    myChart.setChartType(chartType)	
+    myCanvas.needRedraw()
+}
+   
+        myChart.setChartType('donut')
+
+        var leafletMap = L.map('map').setView([50.00, 14.44], 9);
+
+var HikeBike_HikeBike = L.tileLayer('http://{s}.tiles.wmflabs.org/hikebike/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+});
+
+var CartoDB_Positron = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+	subdomains: 'abcd',
+	maxZoom: 19
+});
+
+var CartoDB_PositronNoLabels = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png', {
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+	subdomains: 'abcd',
+	maxZoom: 19
+});
+
+var CartoDB_PositronOnlyLabels = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png', {
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+	subdomains: 'abcd',
+	maxZoom: 19
+});
+
+var OpenStreetMap_BlackAndWhite = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+	maxZoom: 18,
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+});
+
+  
+var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
+});
+
+var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+});
+
+        OpenStreetMap_HOT 
+            .addTo(leafletMap);
+        myCanvas = L.canvasLayer()
+            .delegate(myChart) // -- if we do not inherit from L.CanvasLayer we can setup a delegate to receive events from L.CanvasLayer
+            .addTo(leafletMap);
+//        CartoDB_PositronOnlyLabels
+//            .addTo(leafletMap);      
+	leafletMap.zoomControl.setPosition('bottomright');       
+
+    </script>
+</body>
+</html>
