@@ -128,7 +128,6 @@ export default {
 		return new Promise((resolve, reject) => {
 			axios.get(atlasURL + '/coordenadas' + query)
 			.then((response) => {
-				console.log('Data loaded by getZoneAndCityLocations()')
 				var data = response.data
 
 				//**********************************************************************	
@@ -141,11 +140,15 @@ export default {
 				}
 				var coords = {}
 				data.forEach((coord) => {
+					coord.lat = parseFloat(coord.lat)
+					coord.long = parseFloat(coord.long)
 					coords[coord.id] = coord
 				});
+/*				
 				if (data && data.length) {
 					console.log(data.length, ' location coordinates found')
 				}
+*/				
 				resolve(coords)
 			}) 
 			.catch((error) => {
@@ -157,20 +160,23 @@ export default {
 
 	getVotesByZoneAndCity ({ ano, uf, cargo, numero }) {
 		var cargoETurno = getCargoETurno(cargo, uf)
+		console.log(`carregado cargo e turno a partir do id de cargo ${cargo}`)
+		console.log(cargoETurno)
 		cargo = cargoETurno.cargo
 		var turno = cargoETurno.turno
 		var query = addQuery(null, 'cargo', cargo)
+		query = addQuery(query, 'ano', ano)
 		query = addQuery(query, 'agregacao_politica', 1) 
 		query = addQuery(query, 'agregacao_regional', 7)
-		query = query + '&' + buildSearchQuery('UF', uf, 0)
-		query = query + '&' + buildSearchQuery('NUMERO_CANDIDATO', numero, 1)
+		query = query + '&' + buildSearchQuery('NUM_TURNO', turno, 0)
+		query = query + '&' + buildSearchQuery('UF', uf, 1)
+		query = query + '&' + buildSearchQuery('NUMERO_CANDIDATO', numero, 2)
 
 		console.log(query);
 
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/votos' + query)
 			.then((response) => {
-				console.log('Data loaded by getVotesByZoneAndCity')
 				var data = getArrayFromCSV(response.data, {
 					'numero': 'NUMERO_CANDIDATO',
 					'ano': 'ANO_ELEICAO',
@@ -180,8 +186,6 @@ export default {
 					'nomeMunicipio': 'NOME_MUNICIPIO',
 					'votos': 'QTDE_VOTOS',
 				})
-				//console.error('data')
-				//console.log(data)
 				data.forEach((row) => row.votos = parseInt(row.votos))
 
 				resolve(data)

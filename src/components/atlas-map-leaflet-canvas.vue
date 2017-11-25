@@ -5,11 +5,22 @@
 		<div id="map" ref="map" v-bind:style="mapStyle">
 		</div>
 
+		<div class="map-controls" v-show="displayChartTypes" v-if="0">
+			<div v-for="chart in chartTypes" @click="changeChartType(chart.name)" v-bind:class="chartType==chart.name?'selected-chart':''"><i class="material-icons">{{ chart.icon }}</i></div>
+    	</div>	
+
+		<div class="map-controls" v-show="displayChartTypes">
+			<div v-for="chart in chartTypes" @click="changeChartType(chart.name)" v-bind:class="chartType==chart.name?'selected-chart':''">
+				<v-icon class="pa-1" :color="chartType==chart.name?'blue lighten-2':'grey lighten-3'">{{ chart.icon }}</v-icon>
+			</div>
+    	</div>	
+
 	</v-container>
 
 </template>
 
 <script>
+
 
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
@@ -28,7 +39,6 @@ export default {
 
 			map: null,
 			mapHeight: this.calcMapHeight(),
-			chartCanvas: null,
 			geolocations: {
 				'AC': [ -9.128703100254375, -70.30709995790936 ],
 				'AL': [ -9.657146073170642, -36.69477007781069 ],
@@ -63,9 +73,25 @@ export default {
 
 			brazilBoundaries: [],
 
-			markers: null,
-
-
+			chartCanvas: null,
+			displayChartTypes: false,
+			chartTypes: [{
+				name: 'winner',
+				icon: 'fiber_manual_record'
+			}, {
+				name: 'pie',
+				icon: 'pie_chart'
+			}, {
+				name: 'bar',
+				icon: 'equalizer'
+			}, {
+				name: 'pill',
+				icon: 'pause'
+			}, {
+				name: 'hbar',
+				icon: 'format_align_left'
+			}],
+			chartType: 'winner',
 
 		}
 
@@ -82,30 +108,13 @@ export default {
 	watch: {
 
 		uf () {
-			if (!this.uf)
-				return
-			var boundaries = this.stateBoundaries[this.uf.sigla.toUpperCase()],
-				center = [
-					(boundaries[0][0] + boundaries[1][0]) / 2,
-					(boundaries[1][0] + boundaries[1][1]) / 2
-				],
-				zoom = Math.min(this.map.getBoundsZoom(boundaries), 9)  
-				// zoom cannot be higher then 9 -- we do this because of DF's tiny size
-			this.map.setView(this.geolocations[this.uf.sigla], 7);
-
-			return;
-
 			if (this.uf) {
 				this.flyToState(this.uf.sigla)
 			}
 			else {
-				//this.markers = this.removePieMarkers(this.markers)   
 				Charts.removeCharts()
 				this.fitBoundsToBrazil()
 			}
-
-			return
-
 		},
 
  	},
@@ -127,7 +136,7 @@ export default {
 		Store.adicionarCallbackCandidatos(this.onAlterouCandidatos, this)
 
 		this.map = L.map('map', {
-			zoomDelta: 0.5,
+			zoomDelta: 0.25,
 			zoomSnap: 0.25
 		})
 		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
@@ -199,21 +208,26 @@ export default {
 		},
 
 		flyToState (state) {
-			var boundaries = this.stateBoundaries[state] || this.calcBrazilBoundaries(),
+			var boundaries = this.stateBoundaries[state],
+				center,
+				zoom
+			if (boundaries) {
 				center = [ 
-					(boundaries[0][0] + boundaries[1][0]) /2,
-					(boundaries[0][1] + boundaries[1][1]) /2 
-				],
+						(boundaries[0][0] + boundaries[1][0]) /2,
+						(boundaries[0][1] + boundaries[1][1]) /2 
+				]
 				zoom = this.map.getBoundsZoom(boundaries)
+			}
+			else {
+				center = this.geolocations[state]
+				zoom = 7
+			}					
 
 			// Keeps zoom level up to 9; 
 			// we do this because Distrito Federal is very small, so calling getBoundsZoom()
 			// against its boundaries will produce too much zoom
 			zoom = Math.min(zoom, 9)  
-
-console.log(this.map)
-			this.map.setBounds(boundaries)
-			//this.map.flyTo(center, zoom)
+			this.map.flyTo(center, zoom)
 
 		},	
 
@@ -225,12 +239,22 @@ console.log(this.map)
 			//plottingData = this.calcPlottingData()
 			//console.log('*** these are the first 10 points')
 			//plottingData.reduce((total, obj, index) => index < 10 ? console.log(obj) : null, 0)
+			console.log('entrou no callback onAlterouCandidatos')
 
 			Charts.calcPlottingData()
 			Charts.redrawCharts()
+			this.displayChartTypes = Store.candidatos.length
 
   			console.log('Data has been replotted')
 		},
+
+		changeChartType (chartType) {
+    		Charts.setChartType(chartType)	
+    		Charts.redrawCharts()
+    		this.chartType = chartType
+		},
+
+
 /*
 		calcPlottingData () {
 			var candidatos = Store.candidatos,
@@ -369,3 +393,23 @@ console.log('chegou até aqui, o que será que está errado?')
 }
 
 </script>
+
+<style>
+
+	.map-controls {
+	    position: absolute;
+	    background-color: #424242;	
+	    border: 2px solid #424242;
+	    right: 12px;
+	    top: 12px;
+	    padding: 4px;
+	    cursor: pointer;
+	    z-index:10000;
+	    color: #ddd;
+	}
+
+	.selected-chart {
+		color: #64b5f6;
+	}
+
+</style>	

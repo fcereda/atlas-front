@@ -8,7 +8,6 @@
               v-bind:items="ufs"
               item-value="sigla"
               item-text="nome"
-              v-model="uf"
               label="Para começar, escolha um estado aqui:"
               return-object
               single-line

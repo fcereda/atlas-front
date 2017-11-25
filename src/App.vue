@@ -59,16 +59,6 @@
             style="z-index:0;"
           ></atlas-map>
 
-          <div 
-            class="ufselect elevation-2" 
-            ref="ufselect"             
-            v-if="!uf">
-            <atlas-select-uf
-              :uf="uf"
-              @input="changeUf"
-            ></atlas-select-uf>
-          </div> 
-
     </v-content>
 
     <v-snackbar
@@ -128,6 +118,8 @@
 
     methods: {
       goHome () {
+        console.log('Go Home')          
+        Store.removerTodosCandidatos()
         this.modoInicial = true
         this.uf = ''
       },
@@ -136,12 +128,7 @@
         console.log(uf)
         api.getZoneAndCityLocations(uf.sigla.toLowerCase())
         .then((data) => {
-          console.error('Dados obtidos de getZoneAndCityLocations')  
-          TÁ ERRADO ISSO AQUI, PRECISAMOS QUE getZoneAndCityLocations retorne um array
-          console.log(data)
           Store.coordenadas = data
-          //this.locationCoords = data
-          //console.log(this.locationCoords)
         })
         .catch((error) => {
           this.snackbar.visible = true
@@ -162,8 +149,9 @@
       },
 
       removeCandidate (candidate) {
-        console.log('Removed a candidate from the watch list')
+        console.log('Removendo o seguinte candidate:')
         console.log(candidate)
+        Store.removerCandidato(candidate)  
       },
 
     }  

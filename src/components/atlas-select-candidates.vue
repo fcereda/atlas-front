@@ -3,6 +3,10 @@
 <div class="select-candidates">
 	<v-container fluid>
 
+	    <div v-if="!candidatosSelecionados.length">
+	    	Agora, escolha um ou mais candidatos ou partidos que tenham disputado eleições {{ uf.sigla == 'DF' ? 'no Distrito Federal': 'neste estado' }}:
+	    </div>	
+
 		<atlas-candidate-chip
 			v-for="candidato in candidatosSelecionados"
 			:nome="candidato.nome"
@@ -11,7 +15,7 @@
 			:ano="candidato.ano"
 			:color="candidato.color"
 			:loading="candidato.loading"
-			@remove="removeCandidate"
+			@remove="removeCandidate(candidato)"
 		></atlas-candidate-chip>	
 
 	    <p></p>
@@ -57,73 +61,7 @@ export default {
 
     data: () => ({
 
-        headersCandidatosSelecionados: [
- 		{	
- 			text: '',
- 			align: 'left',
- 			sortable: false,
- 			class: 'pa-0 pl-2 pr-2',
- 			value: 'color'
- 		},       
-       	{
-        	text: 'Nome',
-        	align: 'left',
-        	sortable: true,
-        	value: 'nome',
-        	class: "pa-0 pl-2"
-    	}, { 
-      		text: 'Cargo', 
-      		align: 'left',
-      		sortable: true,
-      		value: 'cargo',
-        	class: "pa-0"
-        }, {
-      		text: 'Ano',
-      		align: 'right',
-      		sortable: true,
-      		value: 'ano',
-      		class:"pa-0 pr-1"
-        }, {
-        	text: '',
-        	align: 'center',
-        	class:"pa-0"
-        }],
-
-    	candidatosSelecionados: [{
-    		nome: 'Paulo Salim Maluf',
-    		partido: 'PP',
-    		cargo: 'D Federal',
-    		ano: 2006,
-    		votos: 1675887,
-    		color: getNextColor(),
-    		show: true
-    	}, {
-    		nome: 'Gilberto Kassab',
-    		partido: 'PSD',
-    		cargo: 'Senador',
-    		ano: 2014,
-    		votos: 567099,
-    		color: getNextColor(),
-    		show: true
-    	}, {
-    		nome: 'Luiza Erundina',
-    		partido: 'PSB',
-    		cargo: 'D Federal',
-    		ano: 2010,
-    		votos: 90001,
-    		color: getNextColor(),
-    		show: true
-    	}, {
-    		nome: 'Geraldo Alckmin',
-    		partido: 'PSDB',
-    		cargo: 'Governador',
-    		ano: 2014,
-    		votos: 35090000,
-    		color: getNextColor(),
-    		show: true
-    	}],
-
-    	votesData: {},
+    	candidatosSelecionados: [],
 
     }),
 
@@ -142,8 +80,18 @@ export default {
     		this.candidatosSelecionados.push(candidateObj)
     		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
+    			// Neste momento, temos um array de objetos
+    			// Agora vamos converter esse array em um dicionário	
+    			
     			console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
     			console.log(data[0])
+/*
+    			var votes = data.map((voteObj) => {
+    				id: codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3),
+    				numero: votos
+    			})
+*/    			
+
     			var votes = {}
     			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
     				var id = codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3)
@@ -152,6 +100,7 @@ export default {
     					numero: votos
     				}	
     			})
+   			
     			candidateObj.loading = false
     			candidateObj.color = getNextColor()
     			this.$emit('add-candidate', {...candidateObj, votos: votes})
@@ -164,13 +113,19 @@ export default {
 
     	removeCandidate (candidato) {
     		var indexToRemove = this.candidatosSelecionados.indexOf(candidato);
+    		console.log(indexToRemove)
+    		console.log('lista de candidatos:')
+    		console.log(this.candidatosSelecionados)
     		if (indexToRemove >= 0) {
-    			var candidate = this.candidatosSelecionados.splice(indexToRemove, 1)
-    			this.$emit('remove-candidate', candidate)
+    			if (this.candidatosSelecionados.splice(indexToRemove, 1)) {
+    				this.$emit('remove-candidate', candidato)
+    			}
+    			console.log('depois de remover o candidato')
+    			console.log(this.candidatosSelecionados)
     		}
     		else {
     			console.error('Error trying to remove candidate from list')
-    			console.log(obj)
+    			console.log(candidato)
     		}
     	}
 
@@ -185,6 +140,7 @@ export default {
 	width: 100%;
 	margin-top: -4px;
 	overflow-y: hidden;
+	color: #ddd;
 }	
 
 .delete-button {

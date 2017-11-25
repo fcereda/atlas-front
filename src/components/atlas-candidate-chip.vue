@@ -5,7 +5,8 @@
 			:color="color"
 			label
 			text-color="white"
-			@input="$emit('remove')">
+			@input="$emit('remove')"
+			>
 			<v-avatar>
 				<v-icon>{{ icone }}</v-icon>
 			</v-avatar>
@@ -23,25 +24,7 @@ export default {
 
 	data () {
 
-		const cargos = {
-			'pr1': 'Presidente T1',
-			'pr2': 'Presidente T2',
-			'g1' : 'Governador T1',
-			'g2' : 'Governador T2',
-			's'  : 'Senador',
-			'df' : 'D Federal',
-			'de' : 'D Estadual',
-			'dd' : 'D Distrital',
-			'pm1': 'Prefeito T1',
-			'pm2': 'Prefeito T2',
-			'v'	 : 'Vereador'
-		}
-
-		return {
-
-			labelCargo: cargos[this.cargo]
-
-		}
+		return {}
 
 	},
 
@@ -54,7 +37,27 @@ export default {
 				'candidato': 'account_circle'
 			}
 			return ICONES[this.tipo || 'candidato']
-		} 
+		},
+
+		labelCargo () {
+
+			const cargos = {
+				'pr1': 'Presidente T1',
+				'pr2': 'Presidente T2',
+				'g1' : 'Governador T1',
+				'g2' : 'Governador T2',
+				's'  : 'Senador',
+				'df' : 'D Federal',
+				'de' : 'D Estadual',
+				'dd' : 'D Distrital',
+				'pm1': 'Prefeito T1',
+				'pm2': 'Prefeito T2',
+				'v'	 : 'Vereador'
+			}
+
+			return cargos[this.cargo]
+
+		}
 
 	}, 
 
