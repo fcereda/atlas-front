@@ -1,8 +1,6 @@
 <template>
-
-		<v-layout row>
-			<v-flex sm12>
-
+	<v-layout row>
+		<v-flex sm12>
 
             <v-select
               v-bind:items="ufs"
@@ -18,23 +16,20 @@
             ></v-select>
 
 
-    <v-menu offset-y class="width100" v-show="false">
-      <v-btn large block elevation-4 color="primary" slot="activator">{{ title }}</v-btn>
-      <div style="height:400px">
-      <v-list dense>
-        <v-list-tile v-for="uf in ufs" :key="uf.sigla" @click="setUF(uf)">
-          <v-list-tile-title>{{ uf.nome }}</v-list-tile-title>
-        </v-list-tile>
-      </v-list>
-      </div>
-    </v-menu>
+		    <v-menu offset-y class="width100" v-show="false">
+		      <v-btn large block elevation-4 color="primary" slot="activator">{{ title }}</v-btn>
+		      <div style="height:400px">
+		      <v-list dense>
+		        <v-list-tile v-for="uf in ufs" :key="uf.sigla" @click="setUF(uf)">
+		          <v-list-tile-title>{{ uf.nome }}</v-list-tile-title>
+		        </v-list-tile>
+		      </v-list>
+		      </div>
+		    </v-menu>
 
 
-    </v-flex></v-layout>
-
-	
-	       
-
+	    </v-flex>
+	</v-layout>
 </template>		
 
 <script>
@@ -53,11 +48,11 @@ export default {
     			sigla: 'AL',
     			nome: 'Alagoas',
     		}, {
-    			sigla: 'AM',
-    			nome: 'Amazonas'
-    		}, {
     			sigla: 'AP',
     			nome: 'Amapá'
+    		}, {
+    			sigla: 'AM',
+    			nome: 'Amazonas'
     		}, {
     			sigla: 'BA',
     			nome: 'Bahia'
@@ -77,14 +72,14 @@ export default {
     			sigla: 'MA',
     			nome: 'Maranhão'
     		}, {
-    			sigla: 'MG',
-    			nome: 'Minas Gerais'
+    			sigla: 'MT',
+    			nome: 'Mato Grosso'
     		}, {
     			sigla: 'MS',
     			nome: 'Mato Grosso do Sul'
     		}, {
-    			sigla: 'MT',
-    			nome: 'Mato Grosso'
+    			sigla: 'MG',
+    			nome: 'Minas Gerais'
     		}, {
     			sigla: 'PA',
     			nome: 'Pará'
@@ -92,14 +87,14 @@ export default {
     			sigla: 'PB',
     			nome: 'Paraíba'
     		}, {
+    			sigla: 'PR',
+    			nome: 'Paraná'
+    		}, {
     			sigla: 'PE',
     			nome: 'Pernambuco'
     		}, {
     			sigla: 'PI',
     			nome: 'Piauí'
-    		}, {
-    			sigla: 'PR',
-    			nome: 'Paraná'
     		}, {
     			sigla: 'RJ',
     			nome: 'Rio de Janeiro'
@@ -119,11 +114,11 @@ export default {
     			sigla: 'SC',
     			nome: 'Santa Catarina'
     		}, {
-    			sigla: 'SE',
-    			nome: 'Sergipe'
-    		}, {
     			sigla: 'SP',
     			nome: 'São Paulo'
+    		}, {
+    			sigla: 'SE',
+    			nome: 'Sergipe'
     		}, {
     			sigla: 'TO',
     			nome: 'Tocantins'
@@ -143,7 +138,6 @@ export default {
 	methods: {
 
 		setUf (uf) {
-			console.log('changing uf to ' + uf.sigla)
 			this.$emit('input', uf)
 		}
 

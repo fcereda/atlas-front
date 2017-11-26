@@ -15,7 +15,10 @@
 			:ano="candidato.ano"
 			:color="candidato.color"
 			:loading="candidato.loading"
+			:showDetails="candidato.showDetails"
 			@remove="removeCandidate(candidato)"
+			@open="showDetailsCandidate(candidato)"
+			@close="hideDetailsCandidate(candidato)"
 		></atlas-candidate-chip>	
 
 	    <p></p>
@@ -35,8 +38,9 @@
 
 import AtlasSelectCandidate from './atlas-select-candidate.vue'
 import AtlasSelectUf from './atlas-select-uf.vue'
-import AtlasCandidateChip from './atlas-candidate-chip.vue'
+import AtlasCandidateChip from './atlas-candidate-record.vue'
 import api from '../lib/api.js'
+import Store from '../lib/store.js'
 
 var currentColorIndex = 0
 
@@ -68,7 +72,6 @@ export default {
     methods: {
 
     	setUF (uf) {
-    		console.log('setUF to ', uf)
     		this.uf = uf
     		this.$emit('change-uf', uf.sigla)
     	},
@@ -76,25 +79,19 @@ export default {
     	addCandidate: function (candidate) {
 
     		var color = 'black',  //'grey darken-1', //getNextColor(),
-    			candidateObj = {...candidate, color, loading: true}
+    			candidateObj = {...candidate, color, loading: true, showDetails: false}
     		this.candidatosSelecionados.push(candidateObj)
     		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
     			// Neste momento, temos um array de objetos
     			// Agora vamos converter esse array em um dicionário	
     			
-    			console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
-    			console.log(data[0])
-/*
-    			var votes = data.map((voteObj) => {
-    				id: codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3),
-    				numero: votos
-    			})
-*/    			
+    			//console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
+    			//console.log(data[0])
 
     			var votes = {}
     			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
-    				var id = codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3)
+    				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
     				votes[id] = {
     					id,
     					numero: votos
@@ -113,20 +110,24 @@ export default {
 
     	removeCandidate (candidato) {
     		var indexToRemove = this.candidatosSelecionados.indexOf(candidato);
-    		console.log(indexToRemove)
-    		console.log('lista de candidatos:')
-    		console.log(this.candidatosSelecionados)
     		if (indexToRemove >= 0) {
     			if (this.candidatosSelecionados.splice(indexToRemove, 1)) {
     				this.$emit('remove-candidate', candidato)
     			}
-    			console.log('depois de remover o candidato')
-    			console.log(this.candidatosSelecionados)
     		}
     		else {
+    			// This should never occur!	
     			console.error('Error trying to remove candidate from list')
     			console.log(candidato)
     		}
+    	},
+
+    	showDetailsCandidate (candidato) {
+  			this.candidatosSelecionados.forEach ((esteCandidato) => esteCandidato.showDetails = (esteCandidato == candidato))
+    	},
+
+    	hideDetailsCandidate (candidato) {
+    		candidato.showDetails = false
     	}
 
     },
