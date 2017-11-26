@@ -98,26 +98,24 @@ function getArrayFromCSV (data, selectedFields) {
 
 	// Removes the line that contains the headers (the first line),
 	// then map each line to an object 
-	console.log(lines.length + ' lines to be processed')
 	lines.splice(0, 1)
-	console.log(lines.length + ' lines to be processed')
 	return lines.map((line) => {
 		var obj = {},
 			row = extractRowFromLine(line)
 		for (let key in fields)
 			obj[key] = row[fields[key]]
-//		for (var i=0; i<headers.length; i++)	
-//			obj[headers[i]] = row[i]
 		return obj
 	})
-
+/*
 	for (var i=1; i<lines.length; i++) {}
 
 	console.log('This CSV file has ' + lines.length + ' lines')
 	console.log('The header is:' + lines[0]);
 	console.log('The next 10 lines are:')
+
 	for (var i=1; i<=10; i++)
 		console.log(lines[i])
+*/
 }
 
 export default {
@@ -144,11 +142,6 @@ export default {
 					coord.long = parseFloat(coord.long)
 					coords[coord.id] = coord
 				});
-/*				
-				if (data && data.length) {
-					console.log(data.length, ' location coordinates found')
-				}
-*/				
 				resolve(coords)
 			}) 
 			.catch((error) => {
@@ -160,8 +153,6 @@ export default {
 
 	getVotesByZoneAndCity ({ ano, uf, cargo, numero }) {
 		var cargoETurno = getCargoETurno(cargo, uf)
-		console.log(`carregado cargo e turno a partir do id de cargo ${cargo}`)
-		console.log(cargoETurno)
 		cargo = cargoETurno.cargo
 		var turno = cargoETurno.turno
 		var query = addQuery(null, 'cargo', cargo)
@@ -195,9 +186,7 @@ export default {
 			})
 		})	
 
-
 // http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=COD_MUN_TSE&colmns[2][search][value]=71072&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22
-
 
 	}
 }

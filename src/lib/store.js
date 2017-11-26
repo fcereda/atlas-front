@@ -34,6 +34,10 @@ export default {
 		return _coordsByUf[uf]
 	},
 
+	calcCoordenadaId (codigoMunicipio, codigoZona) {
+		return codigoMunicipio + '-' + ("00" + parseInt(codigoZona)).slice(-3)
+	},
+
 	calcCandidatoId ({ ano, cargo, numero }) {
 		return `${ano}-${cargo}-${numero}`
 	},
@@ -49,15 +53,11 @@ export default {
 	},
 
 	removerCandidato (candidato) {
-		console.log('removerCandidato()')
 		// The _candidatos array contains objects that are not the same
 		// as the candidato object referenced in the function, so we
 		// must look it up by id
 		var id = this.calcCandidatoId(candidato),
 			index = _candidatos.map((esteCandidato) => esteCandidato.id).indexOf(id)
-		console.log(`index = ${index}`)
-		console.log(candidato)
-		console.log(_candidatos)
 		if (index >= 0) {
 			_candidatos.splice(index, 1)
 			_candidatosPorId[id] = null
@@ -68,11 +68,8 @@ export default {
 	},
 
 	removerTodosCandidatos () {
-		console.log('removendo candidatos')
 		while (_candidatos.length) {
-			console.log(`_candidatos.length = ${_candidatos.length}`)	
 			var candidato = _candidatos.pop()
-			console.log(candidato)
 			callCallbacksCandidato('remover', candidato)
 		}
 	},

@@ -118,14 +118,12 @@
 
     methods: {
       goHome () {
-        console.log('Go Home')          
         Store.removerTodosCandidatos()
         this.modoInicial = true
         this.uf = ''
       },
 
       changeUf (uf) {
-        console.log(uf)
         api.getZoneAndCityLocations(uf.sigla.toLowerCase())
         .then((data) => {
           Store.coordenadas = data
@@ -138,19 +136,10 @@
       },
 
       addCandidate (candidate) {
-        console.log('*** Added a new candidate to the watch list')
-        console.log(candidate)
-        if (this.candidates.indexOf(candidate) >= 0) {
-          console.log('Candidato já fazia parte da lista')
-          return;
-        }
         Store.adicionarCandidato(candidate)
-        this.candidates.push(candidate)
       },
 
       removeCandidate (candidate) {
-        console.log('Removendo o seguinte candidate:')
-        console.log(candidate)
         Store.removerCandidato(candidate)  
       },
 
