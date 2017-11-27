@@ -17,4 +17,18 @@ export default {
 
 	},
 
+	formatInt (num) {
+		var thisNum = num,
+			str = ''
+
+		do {
+			let centenas = ('00' + (thisNum % 1000)).slice(-3)
+			str = centenas + (str ? '.' + str : '') 
+			thisNum = Math.floor(thisNum / 1000)
+		} while (thisNum)
+
+		return str.replace(/^0{1,2}/gm, '')
+
+	}
+
 }

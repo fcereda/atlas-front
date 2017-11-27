@@ -145,7 +145,8 @@ export default {
 		})
 
 		var onHover = function (e) {
-			var posicoesCharts = Charts.posicoesCharts
+			var posicoesCharts = Charts.posicoesCharts,
+				chartsEncontrados = []
 		    for (let i = posicoesCharts.length - 1; i >= 0; i--) {
 				let thisPosicao = posicoesCharts[i].bounds,
 		    		x = e.offsetX, 
@@ -154,12 +155,17 @@ export default {
 		    		thisPosicao[0][1] <= y &&
 		    		thisPosicao[1][0] >= x &&
 		    		thisPosicao[1][1] >= y) {
-		  			console.log(`Mouse over chart i = ${i}, id = ${posicoesCharts[i].id}`)
-		  			this.mouseOverChart = true	  			
-		  			return;
+		  			chartsEncontrados.push(posicoesCharts[i].id)
+		  			//return;
 	        	}
+	    	}
+	    	if (chartsEncontrados.length) {
+	    		console.log('Hovering over ' + chartsEncontrados.join(', '))
+	    		this.mouseOverChart = true
+	    	}
+	    	else {
+	    		this.mouseOverChart = false
 	    	}	
-	    	this.mouseOverChart = false
 		}
 		this.$refs.map.addEventListener('mouseover', onHover.bind(this))		
 		this.$refs.map.addEventListener('mousemove', onHover.bind(this))

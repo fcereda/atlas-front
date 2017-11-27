@@ -63,7 +63,7 @@
 
     <v-snackbar
       :timeout="5000"
-      :color="'error'"
+      :color="snackbar.color"
       v-model="snackbar.visible"
       style="z-index:10000;"
     >
@@ -102,6 +102,7 @@
       candidates: [],
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
+        color: 'error',
         visible: false
       }
     }),
@@ -142,6 +143,12 @@
       removeCandidate (candidate) {
         Store.removerCandidato(candidate)  
       },
+
+      showSnackbar (text, color) {
+        this.snackbar.text = text
+        this.snackbar.color = color
+        this.snackbar.visible = true
+      }
 
     }  
 

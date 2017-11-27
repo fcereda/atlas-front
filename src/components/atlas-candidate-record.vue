@@ -5,24 +5,34 @@
 	<div style="width:100%; display:flex; flex-direction:row;" @mouseover="hovering=true" @mouseout="hovering=false">
 		<div class="icon-class" :style="iconStyle"><v-icon class="pt-1 pl-1 pr-1" color="grey darken-3">{{ icone }}</v-icon></div>
 		<div class="candidate-title" style="width:100%; display:flex; flex-direction:row">
-			<div class="candidate-name" style="width:100%;flex:1">
-				<v-tooltip bottom>
+			<div class="candidate-name pointer" style="width:100%;flex:1" @click="openDetails">
+				<v-tooltip bottom class="z-index-top">
 					<span slot="activator" v-html="titulo"></span>
 					<span v-html="titulo"></span>
 				</v-tooltip>	
 			</div>
 			<v-tooltip bottom class="z-index-top">
-				<span v-if="hovering" class="pl-2 pointer" slot="activator"><v-icon color="grey lighten-1">close</v-icon></span>
+				<span v-if="hovering" class="pl-2 pointer" slot="activator">
+					<v-icon color="grey lighten-1" @click="removerCandidato">close</v-icon>
+				</span>
 				<span>Remover este candidato</span>
 			</v-tooltip>	
-			<v-tooltip bottom class="z-index-top">
-				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator"><v-icon color="grey lighten-1">visibility_off</v-icon></span>
+			<v-tooltip bottom class="z-index-top" v-if="!disabled">
+				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="disableCandidato">
+					<v-icon color="grey lighten-1">visibility_off</v-icon>
+				</span>
 				<span>Ignorar este candidato temporariamente</span>
+			</v-tooltip>	
+			<v-tooltip bottom class="z-index-top" v-if="disabled">
+				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="enableCandidato">
+					<v-icon color="grey lighten-1">visibility</v-icon>
+				</span>
+				<span>Voltar a usar os dados deste candidato</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top">
 				<div class="pointer" v-if="!loading" slot="activator">
-					<v-icon v-if="!showDetails" color="grey lighten-1" @click="openDetails">keyboard_arrow_up</v-icon>
-					<v-icon v-if="showDetails" color="grey lighten-1" @click="closeDetails">keyboard_arrow_down</v-icon>
+					<v-icon v-if="!showDetails" color="grey lighten-1" @click="openDetails">keyboard_arrow_down</v-icon>
+					<v-icon v-if="showDetails" color="grey lighten-1" @click="closeDetails">keyboard_arrow_up</v-icon>
 					</div>
 				<span>Ver mais opções</span>
 			</v-tooltip>	
@@ -32,32 +42,31 @@
 	<div class="candidate-details-pane" ref="detailsPane" :style="detailsPaneStyle">
 		<div class="icon-class pl-3 pr-2" :style="iconStyle"></div>
 		<div class="candidate-details" style="width:100%">
-			<div class="pr-2 pb-1" style="width:100%;text-align:right;">Total de votos neste estado: 12.250.000</div>
+			<div class="pr-2 pb-1" style="width:100%;text-align:right;">Total de votos{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ totalStr }}</div>
 			<div class="pb-1" style="display:flex;flex-direction:row;">
 				<span style="flex:1"></span>
-				<v-btn color="blue-grey darken-1">Ver carreira</v-btn>
-				<v-btn color="primary">Índices individuais</v-btn>				
+				<v-btn color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
+				<v-btn color="primary" @click="snackbar.display=true">Índices individuais</v-btn>				
 			</div>
 		</div>	
 	</div>
 
+	<v-snackbar
+		color="orange darken-4"      :timeout="snackbar.timeout"
+      :top="snackbar.y === 'top'"
+      :bottom="snackbar.y === 'bottom'"
+      :right="snackbar.x === 'right'"
+      :left="snackbar.x === 'left'"
+      :multi-line="snackbar.mode === 'multi-line'"
+      :vertical="snackbar.mode === 'vertical'"
+      v-model="snackbar.display"
+    >
+      {{ snackbar.text }}
+      <v-btn flat color="black" @click.native="snackbar.display = false">Close</v-btn>
+    </v-snackbar>
+
 </div>	
 
-<!--
-		<v-chip 
-			:close="!loading" 
-			:color="color"
-			label
-			text-color="white"
-			@input="$emit('remove')"
-			>
-			<v-avatar>
-				<v-icon>{{ icone }}</v-icon>
-			</v-avatar>
-			<span>{{ nome }} ({{ partido }}) &mdash; {{ labelCargo }} {{ ano }}</span>
-			<span v-if="loading">&nbsp;&nbsp;<v-progress-circular size="20" indeterminate></v-progress-circular></span>
-		</v-chip>
--->
 </template>
 
 <style>
@@ -72,6 +81,7 @@
 	border: 1px solid #888;
 	margin-top:4px;
 	margin-bottom:12px;
+	user-select: none;
 }
 
 .icon-class {
@@ -115,14 +125,24 @@
 
 <script>
 
+import utils from '../lib/utils.js'
+
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'tipo', 'loading', 'showDetails'],
+	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'total', 'tipo', 'loading', 'disabled', 'showDetails'],
 
 	data () {
 
 		return {
 			hovering: false,
+			snackbar: {
+				x: 'left',
+				y: 'top',
+				display: false,
+				timeout: 6000,
+				text: 'Ainda não implementado'
+			}
+
 		}	
 
 	},
@@ -139,7 +159,14 @@ export default {
 		},
 
 		iconStyle () {
-			return `background-color: rgb(${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)});`
+			var style = 'background-color: rgb('
+			if (this.disabled) {
+				style += '96,96,96);'
+			}
+			else {
+				style += `${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)});`
+			}
+			return style
 		},
 
 		detailsPaneStyle () {
@@ -168,7 +195,12 @@ export default {
 
 		titulo () {
 			return `${this.nome} (${this.partido}) &mdash; ${this.labelCargo} ${this.ano}`
+		},
+
+		totalStr () {
+			return utils.formatInt(this.total)
 		}
+
 
 	}, 
 
@@ -184,6 +216,23 @@ export default {
 
 		closeDetails () {
 			this.$emit('close')
+		},
+
+		removerCandidato () {
+			this.$emit('remove')
+		},
+
+		disableCandidato () {
+			this.$emit('disable')
+		},
+
+		enableCandidato () {
+			this.$emit('enable')
+		},
+
+		showsnack () {
+			console.log(this)
+			this.$root.$snackbar('Hello World!', 'error')
 		}
 
 	}

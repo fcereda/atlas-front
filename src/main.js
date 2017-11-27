@@ -5,7 +5,7 @@ import './stylus/main.styl'
 
 Vue.use(Vuetify)
 
-new Vue({
+var vue = new Vue({
   el: '#app',
   render: h => h(App)
 })

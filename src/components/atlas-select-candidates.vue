@@ -14,9 +14,13 @@
 			:cargo="candidato.cargo"
 			:ano="candidato.ano"
 			:color="candidato.color"
+			:total="candidato.total"
 			:loading="candidato.loading"
+			:disabled="candidato.disabled"
 			:showDetails="candidato.showDetails"
 			@remove="removeCandidate(candidato)"
+			@disable="disableCandidate(candidato)"
+			@enable="enableCandidate(candidato)"
 			@open="showDetailsCandidate(candidato)"
 			@close="hideDetailsCandidate(candidato)"
 		></atlas-candidate-chip>	
@@ -28,8 +32,20 @@
 			@add-candidate="addCandidate">
 		</atlas-select-candidate>
 
-
 	</v-container>
+
+    <v-snackbar
+      :timeout="5000"
+      :top="true"
+      :left="true"
+      color="error"
+      v-model="snackbar.visible"
+    >
+      {{ snackbar.text }}
+      <v-btn flat color="black" @click.native="snackbar.visible = false">Fechar</v-btn>
+    </v-snackbar>
+
+
 </div> 
 
 </template>
@@ -66,6 +82,10 @@ export default {
     data: () => ({
 
     	candidatosSelecionados: [],
+    	snackbar: {
+    		text: 'Erro tentando carregar dados',
+    		visible: false
+    	}
 
     }),
 
@@ -79,9 +99,22 @@ export default {
     	addCandidate: function (candidate) {
 
     		var color = 'black',  //'grey darken-1', //getNextColor(),
-    			candidateObj = {...candidate, color, loading: true, showDetails: false}
+    			candidateObj = {...candidate, color, loading: true, disabled: false, showDetails: false},
+    			totalVotos = {}
+
     		this.candidatosSelecionados.push(candidateObj)
-    		api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
+    		api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
+    		.then((data) => {
+    			//console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
+    			//console.log(`${data.length} rows carregados`)
+    			data.forEach(({codigoMunicipio, codigoZona, votos}) => {
+    				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
+    				console.log(id + ': ' + votos)
+    				totalVotos[id] = votos
+				})    				
+				// Somente carregamos os votos do candidato quando tivermos os votos totais das zonas
+				return api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
+			})    		
     		.then((data) => {
     			// Neste momento, temos um array de objetos
     			// Agora vamos converter esse array em um dicionário	
@@ -89,21 +122,33 @@ export default {
     			//console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
     			//console.log(data[0])
 
-    			var votes = {}
+    			//console.log('carregou totalVotos')	
+    			//console.log(totalVotos)
+    			var votes = {},
+    				total = 0
     			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
     				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
     				votes[id] = {
     					id,
-    					numero: votos
-    				}	
+    					numero: votos,
+    					total: totalVotos[id]
+    				}
+    				total += votos	
+    				if (!totalVotos[id]) {
+    					console.error('No voting total for local ' + id)
+    				}
     			})
    			
     			candidateObj.loading = false
     			candidateObj.color = getNextColor()
+    			candidateObj.total = total
     			this.$emit('add-candidate', {...candidateObj, votos: votes})
     		})
     		.catch((error) => {
+    			console.error(`Error trying to load candidate data`)
     			console.error(error)
+    			this.snackbar.visible = true
+    			this.removeCandidate(candidateObj)
     		})
 
     	},
@@ -128,6 +173,16 @@ export default {
 
     	hideDetailsCandidate (candidato) {
     		candidato.showDetails = false
+    	},
+
+    	disableCandidate (candidato) {
+    		console.log('disabling candidate')
+    		console.log(candidato)
+    		candidato.disabled = true
+    	},
+
+    	enableCandidate (candidato) {
+    		candidato.disabled = false
     	}
 
     },

@@ -4,6 +4,13 @@ import Store from './store.js'		// *** REMOVE THIS LATER
 const atlasURL = '/api'
 const cepespURL = '/cepesp/api/consulta'
 
+// Cache for total of votes by zone and municipality.
+// We do this because a typical use case will have the user 
+// reloading this data over and over
+
+// Indexed by ano-cargo-uf
+var totalVotesByZoneAndCity = {}
+
 // Aux functions, private to this module
 
 function getCargoETurno (cargo, uf) {
@@ -55,6 +62,9 @@ function getCargoETurno (cargo, uf) {
 
 }	
 
+function calcIdElection (ano, cargo, uf) {
+	return `${ano}-${cargo}-${uf.toUpperCase()}`
+}
 
 function addQuery (query, key, value) {
 	if (query)
@@ -151,7 +161,7 @@ export default {
 		})
 	},
 
-	getVotesByZoneAndCity ({ ano, uf, cargo, numero }) {
+	getVotesByZoneAndCity ({ ano, cargo, uf, numero }) {
 		var cargoETurno = getCargoETurno(cargo, uf)
 		cargo = cargoETurno.cargo
 		var turno = cargoETurno.turno
@@ -178,6 +188,7 @@ export default {
 					'votos': 'QTDE_VOTOS',
 				})
 				data.forEach((row) => row.votos = parseInt(row.votos))
+				console.error(data[10])
 
 				resolve(data)
 			})
@@ -188,5 +199,63 @@ export default {
 
 // http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=COD_MUN_TSE&colmns[2][search][value]=71072&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22
 
-	}
+	},
+
+	getTotalVotesByZoneAndCity ({ ano, cargo, uf }) {
+		var idEleicao = calcIdElection(ano, cargo, uf)
+
+		if (totalVotesByZoneAndCity[idEleicao]) {
+			return new Promise((resolve, reject) => {
+				resolve(totalVotesByZoneAndCity[idEleicao])
+			})  
+		}
+
+		var cargoETurno = getCargoETurno(cargo, uf)
+		cargo = cargoETurno.cargo
+		var turno = cargoETurno.turno
+		var query = addQuery(null, 'cargo', cargo)
+		query = addQuery(query, 'ano', ano)
+		query = addQuery(query, 'agregacao_politica', 4) 
+		query = addQuery(query, 'agregacao_regional', 7)
+		query = query + '&' + buildSearchQuery('NUM_TURNO', turno, 0)
+		query = query + '&' + buildSearchQuery('UF', uf, 1)
+
+		console.log(query);
+
+		return new Promise ((resolve, reject) => {
+			axios.get(cepespURL + '/tse' + query)
+			.then((response) => {
+				//console.log(response.data)
+				var data = getArrayFromCSV(response.data, {
+					'ano': 'ANO_ELEICAO',
+					'turno': 'NUM_TURNO',
+					'codigoZona': 'NUM_ZONA',
+					'codigoMunicipio': 'COD_MUN_TSE',
+					'nomeMunicipio': 'NOME_MUNICIPIO',
+					'votosNominais': 'QT_VOTOS_NOMINAIS',
+					'votosLegenda': 'QT_VOTOS_LEGENDA'
+				})
+				//data.forEach((row) => row.votos = parseInt(row.votosNominais) + parseInt(row.votosLegenda))
+				var totalVotos = data.map(({ano, turno, codigoZona, codigoMunicipio, votosNominais, votosLegenda}) => {
+					return {
+						ano,
+						turno,
+						codigoZona, 
+						codigoMunicipio,
+						votos: parseInt(votosNominais) + parseInt(votosLegenda)
+					}
+				})
+				totalVotesByZoneAndCity[idEleicao] = totalVotos
+				resolve(totalVotos)
+			})
+			.catch((error) => {
+				reject(error)
+			})
+		})	
+
+// http://cepesp.io/api/consulta/votos?cargo=1&ano=2010&agregacao_politica=1&agregacao_regional=7&columns[0][name]=UF&columns[0][search][value]=SP&columns[1][name]=NUMERO_CANDIDATO&columns[1][search][value]=45&columns[2][name]=COD_MUN_TSE&colmns[2][search][value]=71072&selected_columns[0]=%22NUM_ZONA%22&selected_columns[1]=%22QTDE_VOTOS%22
+
+	},	
+
+
 }
