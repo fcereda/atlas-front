@@ -125,9 +125,12 @@
       },
 
       changeUf (uf) {
-        api.getZoneAndCityLocations(uf.sigla.toLowerCase())
+        api.getCitiesAndLocations(uf.sigla.toLowerCase())
         .then((data) => {
-          Store.coordenadas = data
+          Store.coordenadas = data.coords
+          Store.municipios = data.municipios
+          console.error('*** vamos ver o conteúdo do array municipios')
+          console.log(Store.municipiosArr)
         })
         .catch((error) => {
           this.snackbar.visible = true
