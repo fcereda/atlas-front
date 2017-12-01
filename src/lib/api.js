@@ -130,7 +130,7 @@ function getArrayFromCSV (data, selectedFields) {
 
 export default {
 	
-	getZoneAndCityLocations (uf) {
+	getCitiesAndLocations (uf) {
 		var query = addQuery(null, 'uf', uf)
 
 		return new Promise((resolve, reject) => {
@@ -146,13 +146,35 @@ export default {
 				if (!data || !data.length) {
 					return reject('No data')
 				}
-				var coords = {}
+				var coords = {},
+					municipios = {}
 				data.forEach((coord) => {
 					coord.lat = parseFloat(coord.lat)
 					coord.long = parseFloat(coord.long)
 					coords[coord.id] = coord
+					if (!municipios[coord.codTse]) {
+						municipios[coord.codTse] = {
+							codTse: coord.codTse,
+							nome: coord.municipio,
+							zonas: [coord]
+						}
+					}	
+					else {
+						municipios[coord.codTse].zonas.push(coord)
+					}
 				});
-				resolve(coords)
+				Object.keys(municipios).map((codTse) => {
+					var municipio = municipios[codTse],
+						lat = 0,
+						long = 0
+					municipio.zonas.forEach((zona) => {
+						lat += zona.lat
+						long += zona.long
+					})
+					municipio.lat = lat / municipio.zonas.length
+					municipio.long = long / municipio.zonas.length
+				})
+				resolve({ coords, municipios })
 			}) 
 			.catch((error) => {
 				console.error(error)

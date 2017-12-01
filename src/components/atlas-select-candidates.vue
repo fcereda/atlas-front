@@ -57,6 +57,7 @@ import AtlasSelectUf from './atlas-select-uf.vue'
 import AtlasCandidateChip from './atlas-candidate-record.vue'
 import api from '../lib/api.js'
 import Store from '../lib/store.js'
+import Colors from '../lib/colors.js'
 
 var currentColorIndex = 0
 
@@ -82,6 +83,7 @@ export default {
     data: () => ({
 
     	candidatosSelecionados: [],
+    	colorSequence: new Colors.ColorSequence('categorical'),
     	snackbar: {
     		text: 'Erro tentando carregar dados',
     		visible: false
@@ -98,7 +100,7 @@ export default {
 
     	addCandidate: function (candidate) {
 
-    		var color = 'black',  //'grey darken-1', //getNextColor(),
+    		var color = 'black',  
     			candidateObj = {...candidate, color, loading: true, disabled: false, showDetails: false},
     			totalVotos = {}
 
@@ -140,7 +142,7 @@ export default {
     			})
    			
     			candidateObj.loading = false
-    			candidateObj.color = getNextColor()
+    			candidateObj.color = this.colorSequence.getNextColor()
     			candidateObj.total = total
     			this.$emit('add-candidate', {...candidateObj, votos: votes})
     		})
@@ -157,7 +159,9 @@ export default {
     		var indexToRemove = this.candidatosSelecionados.indexOf(candidato);
     		if (indexToRemove >= 0) {
     			if (this.candidatosSelecionados.splice(indexToRemove, 1)) {
+    				this.colorSequence.returnColor(candidato.color)
     				this.$emit('remove-candidate', candidato)
+
     			}
     		}
     		else {
@@ -178,10 +182,12 @@ export default {
     	disableCandidate (candidato) {
     		console.log('disabling candidate')
     		console.log(candidato)
+    		Store.desabilitarCandidato(candidato)
     		candidato.disabled = true
     	},
 
     	enableCandidate (candidato) {
+    		Store.habilitarCandidato(candidato)
     		candidato.disabled = false
     	}
 

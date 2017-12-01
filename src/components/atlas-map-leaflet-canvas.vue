@@ -39,10 +39,16 @@
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
 
+import atlasSearchMunicipalities from './atlas-search-municipalities.vue'
+
 // Candidates and coordinates data are not included in the component's data object
 //  because we don't want them to be reactive 
 
 export default {
+
+	components: {
+		atlasSearchMunicipalities
+	},
 
 	props: [ 'uf' ],
 
@@ -53,7 +59,7 @@ export default {
 			map: null,
 			mapHeight: this.calcMapHeight(),
 			mouseOverChart: false,
-			geolocations: {
+			geolocations: {  
 				'AC': [ -9.128703100254375, -70.30709995790936 ],
 				'AL': [ -9.657146073170642, -36.69477007781069 ],
 				'AM': [ -3.785717917053299, -64.94955330629251 ],

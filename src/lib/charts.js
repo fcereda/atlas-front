@@ -9,6 +9,7 @@ var radianos = (new Array(101)).fill(1).map((ignore, index) => Math.PI * 2 / 100
     leafletMap,
     chartCanvas,
     plottingData = [],
+    plottingColors = [],
     posicoesCharts = []
 
 export default {
@@ -29,11 +30,18 @@ export default {
             console.error('array coordenadas não contém nenhum dado')
             return    
         }
+
+        plottingColors = candidatos.filter((candidato) => !candidato.disabled)
+                    .map(({ color }) => `rgba(${color},0.75)` )        
+
+        console.log(candidatos.filter((candidato) => !candidato.disabled))            
+        console.log(plottingColors)
          
         plottingData = Object.entries(coordenadas).map(([id, {lat, long}]) => {
             // A base de dados só contém os locais onde o candidato obteve pelo menos um voto,
             // por isso precisamos primeiro checar se o local existe no object candidato.votos 
-            var votos = candidatos.map((candidato) => candidato.votos[id] ? candidato.votos[id].numero : 0),
+            var votos = candidatos.filter((candidato) => !candidato.disabled)
+                    .map((candidato) => candidato.votos[id] ? candidato.votos[id].numero : 0),
                 totalVotos = votos.reduce((total, numero) => total + numero, 0),
                 proporcoes = votos.map((numero) => numero / totalVotos),
                 porcentagens = proporcoes.map((proporcao) => Math.round(proporcao * 100)),
@@ -47,6 +55,7 @@ export default {
                     return acumulado
                 }) ],
                 angulosIniciais = [...porcentagensAcumuladas.slice(0, porcentagensAcumuladas.length -1).map((porcentagem) => radianos[porcentagem]), Math.PI * 2]
+
 
                 //angulosFinais = porcentagensAcumuladas.slice(1, porcentagensAcumuladas.length).map((porcentagem) => radianos[porcentagem]) 
 
@@ -74,18 +83,18 @@ export default {
                 ranking,
                 maisVotado,
                 porcentagensAcumuladas,
-                angulosIniciais /*,
-                angulosFinais */
+                angulosIniciais,
+                colors: plottingColors
             }
         })
-
         return plottingData
     },
 
 
     drawChartFactory (chartType) {
-        var colorSequence = ["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
-            colors = colorSequence.map((color) => 'rgba(' + color + ',0.8)'),
+        var //colorSequence = plottingData.colors || [],
+        //["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+            colors,
             radius,  
             lineWidth,
             drawFunction = null;
@@ -225,12 +234,15 @@ export default {
      
             ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
             posicoesCharts = []
+            console.log('plottingData')
+            console.log(plottingData)
             for (var i = 0; i < plottingData.length; i++) {
                 var d = plottingData[i];
 
                 if (params.bounds.contains([d.lat, d.long]) && d.totalVotos) {    
                     let dot = params.layer._map.latLngToContainerPoint([d.lat, d.long]); 
                     for (var j = 0; j < d.votos.length; j++) {
+                        colors = d.colors
                         drawFunction(ctx, dot, d, j)
                     }
                     posicoesCharts.push({ 

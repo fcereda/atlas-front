@@ -3,7 +3,9 @@
 <div class="candidate-record" style="width:100%;display:flex;flex-direction:column">
 
 	<div style="width:100%; display:flex; flex-direction:row;" @mouseover="hovering=true" @mouseout="hovering=false">
-		<div class="icon-class" :style="iconStyle"><v-icon class="pt-1 pl-1 pr-1" color="grey darken-3">{{ icone }}</v-icon></div>
+		<div class="icon-class" :style="iconStyle">
+			<v-icon class="pt-1 pl-1 pr-1" color="grey darken-3" @click="toggleEnableCandidato">{{ icone }}</v-icon>
+		</div>
 		<div class="candidate-title" style="width:100%; display:flex; flex-direction:row">
 			<div class="candidate-name pointer" style="width:100%;flex:1" @click="openDetails">
 				<v-tooltip bottom class="z-index-top">
@@ -86,6 +88,7 @@
 
 .icon-class {
 	width:32px;
+	cursor: pointer;
 }
 
 .candidate-title {
@@ -164,8 +167,9 @@ export default {
 				style += '96,96,96);'
 			}
 			else {
-				style += `${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)});`
+				style += this.color + ')'
 			}
+			console.error(`style= ${style}`)
 			return style
 		},
 
@@ -228,6 +232,10 @@ export default {
 
 		enableCandidato () {
 			this.$emit('enable')
+		},
+
+		toggleEnableCandidato () {
+			this.$emit(this.disabled ? 'enable' : 'disable')
 		},
 
 		showsnack () {
