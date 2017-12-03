@@ -44,7 +44,17 @@
 	<div class="candidate-details-pane" ref="detailsPane" :style="detailsPaneStyle">
 		<div class="icon-class pl-3 pr-2" :style="iconStyle"></div>
 		<div class="candidate-details" style="width:100%">
-			<div class="pr-2 pb-1" style="width:100%;text-align:right;">Total de votos{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ totalStr }}</div>
+			<div 
+				class="pr-2 pb-1" 
+				style="width:100%;text-align:right;"
+			>
+				Total de votos{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ totalStr }}
+<!--
+				<br>
+				Índice LQ: {{ indiceLQ }}<br>
+				Índice G: {{ indiceG }}
+-->				
+			</div>
 			<div class="pb-1" style="display:flex;flex-direction:row;">
 				<span style="flex:1"></span>
 				<v-btn color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
@@ -133,7 +143,7 @@ import utils from '../lib/utils.js'
 
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'total', 'tipo', 'loading', 'disabled', 'showDetails'],
+	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'total', 'indiceLQ', 'indiceG', 'tipo', 'loading', 'disabled', 'showDetails'],
 
 	data () {
 
@@ -211,6 +221,12 @@ export default {
 	}, 
 
 	watch: {
+
+		showDetails () {
+			if (!this.showDetails) {
+				this.esconderIndicesIndividuais()
+			}				
+		}
 
 	},
 

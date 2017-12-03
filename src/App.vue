@@ -51,6 +51,10 @@
         @show-indexes="showIndividualIndexes"
       ></atlas-select-candidates>
 
+      <atlas-painel-zonas
+        :zonas="zonasHover"
+      ></atlas-painel-zonas>  
+
     </v-navigation-drawer>
 
     <v-content>
@@ -59,6 +63,7 @@
             :uf="uf"
             :indexes="individualIndexes"
             style="z-index:0;"
+            @hover="onMapHover"
           ></atlas-map>
 
           <div v-if="individualIndexes" style="position:absolute;width:50px;height:50px;background-color:firebrick;left:100px;top:20px">.</div>
@@ -88,6 +93,7 @@
   import atlasMap from './components/atlas-map-leaflet-canvas.vue'
   import atlasSelectUf from './components/atlas-select-uf.vue'
   import atlasDisplayUf from './components/atlas-display-uf.vue'
+  import atlasPainelZonas from './components/atlas-painel-zonas.vue'
 
   export default {
 
@@ -95,7 +101,8 @@
       'atlas-select-candidates': atlasSelectCandidates,
       'atlas-map': atlasMap,
       'atlas-select-uf': atlasSelectUf,
-      'atlas-display-uf': atlasDisplayUf
+      'atlas-display-uf': atlasDisplayUf,
+      'atlas-painel-zonas': atlasPainelZonas
     },
 
     data: () => ({
@@ -105,6 +112,7 @@
 //      locationCoords: null,
       candidates: [],
       individualIndexes: null,
+      zonasHover: [],
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
         color: 'error',
@@ -156,6 +164,12 @@
 
       showIndividualIndexes (candidate) {
         this.individualIndexes = candidate
+      },
+
+      onMapHover (zonas) {
+        if (!zonas || !zonas.length)
+          zonas = []
+        this.zonasHover = zonas
       },
 
       showSnackbar (text, color) {

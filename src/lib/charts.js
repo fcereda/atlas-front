@@ -218,9 +218,15 @@ export default {
             if (index != indexCandidatoSelecionado)
                 return
 
-            var steps = [0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 4.0, 8.0, 10.0, 20.0],
-                valorIndice = d.indices[index] ? (d.indices[index].indiceLQ || 0) : 0,
-                color = 0;
+            var steps = [], 
+                color = 0,
+                valorIndice = d.indices[index] ? (d.indices[index][indice] || 0) : 0  // indice may be 'indiceLQ' or 'indiceG'
+
+            if (indice == 'indiceG')
+                steps = [-0.8, -0.5 - 0.25, -0.1, 0, 0.1, 0.25, 0.5, 0.8]
+            else
+                steps = [0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 4.0, 8.0, 10.0, 20.0],
+            console.log(`valorIndice = ${valorIndice}`)    
             for (var i=0; i<steps.length; i++)    
                 if (valorIndice < steps[i])
                     break
@@ -291,6 +297,7 @@ export default {
         console.error('entrou em setChartType, chartType = ' + chartType)
         if (candidato) {
             candidatoSelecionado = Store.obterCandidato(candidato)
+            indice = indice || 'indiceLQ'
         }
         else
             candidatoSelecionado = null

@@ -15,6 +15,8 @@
 			:ano="candidato.ano"
 			:color="candidato.color"
 			:total="candidato.total"
+			:indiceLQ="candidato.somaIndiceLQ"
+			:indiceG="candidato.somaIndiceG"
 			:loading="candidato.loading"
 			:disabled="candidato.disabled"
 			:showDetails="candidato.showDetails"
@@ -147,7 +149,9 @@ export default {
 
     			console.log('total de votos = ' + totalGeral)
     			
-    			var indices = {}
+    			var indices = {},
+    				somaIndiceLQ = 0,
+    				somaIndiceG = 0
     			for (var id in votes) {
 					let votosCandidatoZona = votes[id].numero,
 						totalVotosZona = totalVotos[id],
@@ -159,7 +163,9 @@ export default {
 						indiceLQ,
 						indiceG
 					}
-					console.log(`LQ para a zona ${id}: ${indiceLQ}`)
+
+					somaIndiceLQ += indiceLQ
+					somaIndiceG += (indiceG ^ 2)
     			}
 /*
     			var minLQ = 1000,
@@ -180,6 +186,8 @@ export default {
     			candidateObj.loading = false
     			candidateObj.color = this.colorSequence.getNextColor()
     			candidateObj.total = totalCandidato
+    			candidateObj.somaIndiceLQ = somaIndiceLQ
+    			candidateObj.somaIndiceG = somaIndiceG
     			this.$emit('add-candidate', {...candidateObj, votos: votes, indices})
     		})
     		.catch((error) => {

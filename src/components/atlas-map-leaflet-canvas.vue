@@ -204,6 +204,7 @@ export default {
 	    	if (chartsEncontrados.length) {
 	    		console.log('Hovering over ' + chartsEncontrados.join(', '))
 	    		this.mouseOverChart = true
+	    		this.$emit('hover', chartsEncontrados)
 	    	}
 	    	else {
 	    		this.mouseOverChart = false
@@ -301,6 +302,13 @@ export default {
     		Charts.redrawCharts()
     		this.chartType = chartType
 		},
+
+		changeIndexChartType (indexType) {
+			// this.indexes contains the candidate for who we are generating the individual index
+			Charts.setChartType('index', this.indexes, indexType)
+			Charts.redrawCharts()
+			this.indexChartType = indexType
+		}	
 
 	}	
 
