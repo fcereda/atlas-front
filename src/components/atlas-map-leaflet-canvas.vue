@@ -72,6 +72,7 @@ export default {
 			map: null,
 			mapHeight: this.calcMapHeight(),
 			mouseOverChart: false,
+			zonasSobMouse: [],
 			geolocations: {  
 				'AC': [ -9.128703100254375, -70.30709995790936 ],
 				'AL': [ -9.657146073170642, -36.69477007781069 ],
@@ -201,10 +202,11 @@ export default {
 		  			//return;
 	        	}
 	    	}
+	    	this.zonasSobMouse = chartsEncontrados
 	    	if (chartsEncontrados.length) {
 	    		console.log('Hovering over ' + chartsEncontrados.join(', '))
 	    		this.mouseOverChart = true
-	    		this.$emit('hover', chartsEncontrados)
+	    		//this.$emit('hover', chartsEncontrados)
 	    	}
 	    	else {
 	    		this.mouseOverChart = false
@@ -212,9 +214,12 @@ export default {
 		}
 		this.$refs.map.addEventListener('mouseover', onHover.bind(this))		
 		this.$refs.map.addEventListener('mousemove', onHover.bind(this))
-//		document.getElementById('map').addEventListener('mouseover', onHover)
-		//document.getElementById('map').addEventListener('mousemove', onHover)
 
+		var onClick = function (e) {
+			if (this.zonasSobMouse && this.zonasSobMouse.length)
+				this.$emit('click', this.zonasSobMouse)
+		}
+		this.$refs.map.addEventListener('click', onClick.bind(this))
 
 		// this.onAlterouCandidatos() will be called every time a candidate 
 		// is added to or removed from Store.the candidatos list

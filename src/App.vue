@@ -45,6 +45,7 @@
 
       <atlas-select-candidates
         v-if="!modoInicial"
+        v-show="!mostrarPainelZonas"
         :uf="uf"
         @add-candidate="addCandidate"
         @remove-candidate="removeCandidate"
@@ -52,7 +53,9 @@
       ></atlas-select-candidates>
 
       <atlas-painel-zonas
+        v-show="!modoInicial && mostrarPainelZonas"
         :zonas="zonasHover"
+        @close="mostrarPainelZonas = false"
       ></atlas-painel-zonas>  
 
     </v-navigation-drawer>
@@ -64,9 +67,8 @@
             :indexes="individualIndexes"
             style="z-index:0;"
             @hover="onMapHover"
+            @click="onMapClick"
           ></atlas-map>
-
-          <div v-if="individualIndexes" style="position:absolute;width:50px;height:50px;background-color:firebrick;left:100px;top:20px">.</div>
 
     </v-content>
 
@@ -113,6 +115,7 @@
       candidates: [],
       individualIndexes: null,
       zonasHover: [],
+      mostrarPainelZonas: false,
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
         color: 'error',
@@ -166,9 +169,20 @@
         this.individualIndexes = candidate
       },
 
-      onMapHover (zonas) {
-        if (!zonas || !zonas.length)
+      onMapHover () {
+        // NOTHING HERE
+      },
+
+      onMapClick (zonas) {
+        console.error('clicou no mapa')
+        console.log(zonas)
+        if (!zonas || !zonas.length) {
           zonas = []
+          this.mostrarPainelZonas = false
+        }
+        else {
+          this.mostrarPainelZonas = true
+        }
         this.zonasHover = zonas
       },
 

@@ -29,6 +29,26 @@ export default {
 
 		return str.replace(/^0{1,2}/gm, '')
 
-	}
+	},
+
+	obterNomeCargo (codigoCargo) {
+
+		const cargos = {
+			'pr1': 'Presidente T1',
+			'pr2': 'Presidente T2',
+			'g1' : 'Governador T1',
+			'g2' : 'Governador T2',
+			's'  : 'Senador',
+			'df' : 'D Federal',
+			'de' : 'D Estadual',
+			'dd' : 'D Distrital',
+			'pm1': 'Prefeito T1',
+			'pm2': 'Prefeito T2',
+			'v'	 : 'Vereador'
+		}
+
+		return cargos[codigoCargo]
+
+	},	
 
 }

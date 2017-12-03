@@ -1,40 +1,74 @@
 <template>
 
 <div style="width:100%;min-height:100px;color:#ddd;">
+	<div style="text-align:right">
+		<v-btn flat dark color="grey lighten-1" @click="closePanel">
+			<v-icon>keyboard_arrow_left</v-icon>&nbsp;&nbsp;Voltar à seleção de candidatos
+		</v-btn>
+	</div>
 
-	<div v-for="zona in zonasInfo" class="pa-4 elevation-4">
+	<div v-for="zona in zonasInfo" class="pa-4 painel-zonas">
 
 		<h6>{{ zona.municipio }} &ndash; {{ zona.zona }}&ordf; ZE</h6>
 
-		<table>
+		<table class="zona-detalhes">
 
-			<tr v-for="candidato in zona.candidatos" style="padding-bottom:10px;">
+			<tr class="zona-detalhes-tr" v-for="candidato in zona.candidatos" style="padding-bottom:10px;">
 
-				<td v-bind:style="'min-width:20px;background-color:rgb('+candidato.color+');'">
-					<v-icon class="pa-1" color="grey darken-3">account_circle</v-icon>
+				<td style="min-width:20px;">
+					<div v-bind:style="'width:32px;height:32px;background-color:rgb('+candidato.color+');'">
+						<v-icon class="pa-1" color="grey darken-3">account_circle</v-icon>
+					</div>
 				</td>
 
 
 				<td width="100%">{{ candidato.nome}} ({{ candidato.partido}})
 					<br>
-					{{ candidato.cargo }} {{ candidato.ano}}
+					{{ labelCargo(candidato.cargo) }} {{ candidato.ano}}
 				</td>
-				<td align="right" >{{ candidato.votos.numero }}&nbsp;votos</td>
-				<td align="right">&nbsp;&nbsp;{{ candidato.votos.porcentagem }}%</td>
-
-			</tr>	
+				<td align="right" >
+					{{ candidato.votos.numero }}&nbsp;votos<br>
+					{{ candidato.votos.porcentagem }}%
+				</td>
+ 
+   			</tr>	
 
 		</table>
 
-
 	</div>
-
 
 </div>
 
-
-
 </template>
+
+<style>
+
+.painel-zonas {
+	border-bottom: 1px solid #616161;
+}
+
+table.zona-detalhes {
+	border-spacing: 4px 8px;
+	border-collapse: separate;
+}
+
+.zona-detalhes-tr {
+	padding-bottom:2px;
+	padding-top:2px;
+	border: 1px solid #aaa;
+
+}
+
+table.zona-detalhes tr td {
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	margin-bottom: 4px;
+	//background-color: yellow;
+}
+	
+</style>
 
 <script>
 
@@ -71,7 +105,8 @@ export default {
 					zona: coordenada.zona,
 					candidatos: this.obterVotos(idZona)
 				}
-			})
+			}).sort((a, b) => a.municipio > b.municipio ? 1 : a.municipio < b.municipio ? -1 : 0)
+			  .sort((a, b) => a.zona > b.zona ? 1 : a.zona < b.zona ? -1 : 0)
 		}
 
 	},
@@ -82,6 +117,13 @@ export default {
 			var candidatos = Store.candidatos
 			console.log(candidatos[0])
 			var votos = candidatos.map(({id, nome, ano, cargo, partido, color, votos}) => {
+				var votosZona = votos[idZona] 
+				if (!votosZona) {
+					votosZona = {
+						numero: 0,
+						total: 1
+					}
+				}	
 				return {
 					id,
 					nome,
@@ -90,14 +132,21 @@ export default {
 					partido,
 					color,
 					votos: {
-						numero: Utils.formatInt(votos[idZona].numero),
-						porcentagem: Math.floor((votos[idZona].numero / votos[idZona].total) * 10000)/100
+						numero: Utils.formatInt(votosZona.numero),
+						porcentagem: Math.floor((votosZona.numero / votosZona.total) * 10000)/100
 					}
 				}
 			})
-			console.log(votos)
-			return votos
-		}
+			return votos.sort((a, b) => b.votos.porcentagem - a.votos.porcentagem)
+		},
+
+		labelCargo (codigoCargo) {
+			return Utils.obterNomeCargo(codigoCargo)
+		},
+
+		closePanel () {
+			this.$emit('close')
+		},
 
 	}
 
