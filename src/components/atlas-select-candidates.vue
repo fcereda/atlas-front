@@ -23,6 +23,8 @@
 			@enable="enableCandidate(candidato)"
 			@open="showDetailsCandidate(candidato)"
 			@close="hideDetailsCandidate(candidato)"
+			@ver-indices="verIndicesIndividuais(candidato)"
+			@esconder-indices="verIndicesIndividuais(null)"
 		></atlas-candidate-chip>	
 
 	    <p></p>
@@ -102,17 +104,21 @@ export default {
 
     		var color = 'black',  
     			candidateObj = {...candidate, color, loading: true, disabled: false, showDetails: false},
-    			totalVotos = {}
+    			totalVotos = {},
+    			totalGeral = 0
 
     		this.candidatosSelecionados.push(candidateObj)
     		api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
-    			//console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
-    			//console.log(`${data.length} rows carregados`)
+    			console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
+    			console.log(`${data.length} rows carregados`)
     			data.forEach(({codigoMunicipio, codigoZona, votos}) => {
     				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
-    				console.log(id + ': ' + votos)
-    				totalVotos[id] = votos
+    				if (totalVotos[id])
+    					totalVotos[id] += votos
+    				else
+    					totalVotos[id] = votos
+    				totalGeral += votos
 				})    				
 				// Somente carregamos os votos do candidato quando tivermos os votos totais das zonas
 				return api.getVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
@@ -121,13 +127,8 @@ export default {
     			// Neste momento, temos um array de objetos
     			// Agora vamos converter esse array em um dicionário	
     			
-    			//console.log(data.length +  ' rows loaded by api.getVotesByZoneAndCity')
-    			//console.log(data[0])
-
-    			//console.log('carregou totalVotos')	
-    			//console.log(totalVotos)
     			var votes = {},
-    				total = 0
+    				totalCandidato = 0
     			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
     				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
     				votes[id] = {
@@ -135,16 +136,51 @@ export default {
     					numero: votos,
     					total: totalVotos[id]
     				}
-    				total += votos	
+    				totalCandidato += votos	
     				if (!totalVotos[id]) {
     					console.error('No voting total for local ' + id)
     				}
     			})
+
+    			// Vamos agora calcular o índice LQ (location quotient) de cada zona-município
+    			// O LQ é calculado como: (votos do candidato no distrito / total de votos do candidato) / (total de votos do distrito / total geral de votos)
+
+    			console.log('total de votos = ' + totalGeral)
+    			
+    			var indices = {}
+    			for (var id in votes) {
+					let votosCandidatoZona = votes[id].numero,
+						totalVotosZona = totalVotos[id],
+						indiceLQ = (votosCandidatoZona / totalCandidato) / (totalVotosZona / totalGeral),
+						indiceG  = (votosCandidatoZona / totalCandidato) - (totalVotosZona / totalGeral)
+
+					indices[id]	= {
+						id, 
+						indiceLQ,
+						indiceG
+					}
+					console.log(`LQ para a zona ${id}: ${indiceLQ}`)
+    			}
+/*
+    			var minLQ = 1000,
+    				maxLQ = -1000,
+    				mediaLQ = 0,
+    				contador = 0
+    			for (var id in indices) {
+    				var indiceLQ = indices[id].indiceLQ
+    				mediaLQ += indiceLQ
+    				minLQ = Math.min(minLQ, indiceLQ)
+    				maxLQ = Math.max(maxLQ, indiceLQ)
+    				contador += 1
+    			}
+    			mediaLQ = mediaLQ / contador
+    			console.log(`Índice LQ: média ${mediaLQ}, mínimo ${minLQ}, máximo ${maxLQ}`)
+*/    			
    			
     			candidateObj.loading = false
     			candidateObj.color = this.colorSequence.getNextColor()
-    			candidateObj.total = total
-    			this.$emit('add-candidate', {...candidateObj, votos: votes})
+    			candidateObj.total = totalCandidato
+    			this.$emit('add-candidate', {...candidateObj, votos: votes, indices})
     		})
     		.catch((error) => {
     			console.error(`Error trying to load candidate data`)
@@ -161,7 +197,6 @@ export default {
     			if (this.candidatosSelecionados.splice(indexToRemove, 1)) {
     				this.colorSequence.returnColor(candidato.color)
     				this.$emit('remove-candidate', candidato)
-
     			}
     		}
     		else {
@@ -177,6 +212,7 @@ export default {
 
     	hideDetailsCandidate (candidato) {
     		candidato.showDetails = false
+    		this.$emit('show-indexes', null)
     	},
 
     	disableCandidate (candidato) {
@@ -189,6 +225,10 @@ export default {
     	enableCandidate (candidato) {
     		Store.habilitarCandidato(candidato)
     		candidato.disabled = false
+    	},
+
+    	verIndicesIndividuais (candidato) {
+    		this.$emit('show-indexes', candidato)
     	}
 
     },

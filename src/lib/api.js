@@ -227,6 +227,7 @@ export default {
 		var idEleicao = calcIdElection(ano, cargo, uf)
 
 		if (totalVotesByZoneAndCity[idEleicao]) {
+			console.log('totalVotes encontrado no cache')
 			return new Promise((resolve, reject) => {
 				resolve(totalVotesByZoneAndCity[idEleicao])
 			})  
@@ -244,6 +245,23 @@ export default {
 
 		console.log(query);
 
+		return new Promise ((resolve, reject) => {
+			axios.get(cepespURL + '/votos' + query)
+			.then((response) => {
+				var data = getArrayFromCSV(response.data, {
+					'ano': 'ANO_ELEICAO',
+					'codigoMunicipio': 'COD_MUN_TSE',
+					'nomeMunicipio': 'NOME_MUNICIPIO',
+					'codigoZona': 'NUM_ZONA',
+					'votos': 'QTDE_VOTOS'
+				})
+				data.forEach((obj) => obj.votos = parseInt(obj.votos))
+				totalVotesByZoneAndCity[idEleicao] = data
+				resolve(data)	
+			})
+
+/*
+		O CÓDIGO ABAIXO ESTÁ CORRETO E ESTAVA FUNCIONANDO, MAS ALGUMA COISA ACONTECEU COM A API DO CEPESP!!
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/tse' + query)
 			.then((response) => {
@@ -270,6 +288,7 @@ export default {
 				totalVotesByZoneAndCity[idEleicao] = totalVotos
 				resolve(totalVotos)
 			})
+*/			
 			.catch((error) => {
 				reject(error)
 			})

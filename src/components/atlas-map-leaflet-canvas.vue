@@ -10,10 +10,23 @@
     	</div>	
 
 		<div class="map-controls map-control-chart-type" v-show="displayChartTypes">
-			<div v-for="chart in chartTypes" @click="changeChartType(chart.name)" v-bind:class="chartType==chart.name?'selected-chart':''">
+			<div 
+				v-for="chart in chartTypes" 
+				v-show="!mostrarIndicesIndividuais" 
+				@click="changeChartType(chart.name)" 
+				v-bind:class="chartType==chart.name?'selected-chart':''"
+			>
 				<v-icon class="pa-1" :color="chartType==chart.name?'blue lighten-2':'grey lighten-2'">{{ chart.icon }}</v-icon>
 			</div>
+			<div 
+				v-for="chart in indexChartTypes"
+				v-show="mostrarIndicesIndividuais"
+				@click="changeIndexChartType(chart.name)"
+				v-bind:class="indexChartType==chart.name?'selected-chart':''"
+			><div class="char-icon">{{ chart.label }}</div>
+			</div>	
     	</div>	
+
 
 <!--
     	<div class="map-controls" style="position:relative;left:12px;top:12px;width:1px">
@@ -50,7 +63,7 @@ export default {
 		atlasSearchMunicipalities
 	},
 
-	props: [ 'uf' ],
+	props: [ 'uf', 'indexes' ],
 
 	data () {
 
@@ -111,6 +124,15 @@ export default {
 				icon: 'format_align_left'
 			}],
 			chartType: 'winner',
+			indexChartTypes: [{
+				name: 'indiceG',
+				label: 'G'
+			}, {
+				name: 'indiceLQ',
+				label: 'LQ'
+			}],
+			indexChartType: 'indiceLQ',	
+			mostrarIndicesIndividuais: false
 
 		}
 
@@ -135,6 +157,20 @@ export default {
 				this.fitBoundsToBrazil()
 			}
 		},
+
+		indexes () {
+			console.log('alterou prop indexes de atlas-chart')
+			console.log(this.indexes)
+			if (!this.indexes) {
+				Charts.setChartType(this.chartType)
+				this.mostrarIndicesIndividuais = false
+			}
+			else {
+				Charts.setChartType('index', this.indexes, this.indexChartType)
+				this.mostrarIndicesIndividuais = true
+			}	
+    		Charts.redrawCharts()
+		}
 
  	},
 
@@ -297,6 +333,16 @@ export default {
 
 	.selected-chart {
 		color: #64b5f6;
+	}
+
+	.char-icon {
+		width:32px;
+		height:32px;
+		padding-top:4px;
+		padding-bottom:4px;
+		text-align:center;
+		font-weight:800;
+		font-size:18px;
 	}
 
 	.leaflet-bar {

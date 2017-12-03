@@ -48,7 +48,8 @@
 			<div class="pb-1" style="display:flex;flex-direction:row;">
 				<span style="flex:1"></span>
 				<v-btn color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
-				<v-btn color="primary" @click="snackbar.display=true">Índices individuais</v-btn>				
+				<v-btn v-show="!indicesIndividuais" color="primary" :disabled="disabled" @click="verIndicesIndividuais">Índices individuais</v-btn>
+				<v-btn v-show="indicesIndividuais" color="primary" :disabled="disabled" @click="esconderIndicesIndividuais">Voltar a comparações</v-btn>				
 			</div>
 		</div>	
 	</div>
@@ -137,6 +138,7 @@ export default {
 	data () {
 
 		return {
+			indicesIndividuais: false,
 			hovering: false,
 			snackbar: {
 				x: 'left',
@@ -219,6 +221,7 @@ export default {
 		},
 
 		closeDetails () {
+			this.esconderIndicesIndividuais()
 			this.$emit('close')
 		},
 
@@ -236,6 +239,16 @@ export default {
 
 		toggleEnableCandidato () {
 			this.$emit(this.disabled ? 'enable' : 'disable')
+		},
+
+		verIndicesIndividuais () {
+			this.indicesIndividuais = true
+			this.$emit('ver-indices')
+		},
+
+		esconderIndicesIndividuais () {
+			this.indicesIndividuais = false			
+			this.$emit('esconder-indices')	
 		},
 
 		showsnack () {

@@ -90,8 +90,12 @@ export default {
 		}
 	},
 
-	obterCandidato (id) {
+	obterCandidatoPorId (id) {
 		return _candidatosPorId[id]
+	},
+
+	obterCandidato (candidato) {
+		return this.obterCandidatoPorId(this.calcCandidatoId(candidato))
 	},
 
 	desabilitarCandidato (candidato) {

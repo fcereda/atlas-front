@@ -34,12 +34,10 @@ export default {
         plottingColors = candidatos.filter((candidato) => !candidato.disabled)
                     .map(({ color }) => `rgba(${color},0.75)` )        
 
-        console.log(candidatos.filter((candidato) => !candidato.disabled))            
-        console.log(plottingColors)
-         
         plottingData = Object.entries(coordenadas).map(([id, {lat, long}]) => {
             // A base de dados só contém os locais onde o candidato obteve pelo menos um voto,
             // por isso precisamos primeiro checar se o local existe no object candidato.votos 
+
             var votos = candidatos.filter((candidato) => !candidato.disabled)
                     .map((candidato) => candidato.votos[id] ? candidato.votos[id].numero : 0),
                 totalVotos = votos.reduce((total, numero) => total + numero, 0),
@@ -52,10 +50,12 @@ export default {
                 acumulado = 0,
                 porcentagensAcumuladas = [0, ...porcentagens.map((porcentagem) => {
                     acumulado += porcentagem
-                    return acumulado
+                    return acumulado 
                 }) ],
                 angulosIniciais = [...porcentagensAcumuladas.slice(0, porcentagensAcumuladas.length -1).map((porcentagem) => radianos[porcentagem]), Math.PI * 2]
 
+            //var indices = candidatos.filter((candidato) => !candidato.disabled).map((candidato) => candidato.indices[id]) 
+            var indices = candidatos.map((candidato) => candidato.indices[id]) 
 
                 //angulosFinais = porcentagensAcumuladas.slice(1, porcentagensAcumuladas.length).map((porcentagem) => radianos[porcentagem]) 
 
@@ -84,6 +84,7 @@ export default {
                 maisVotado,
                 porcentagensAcumuladas,
                 angulosIniciais,
+                indices,
                 colors: plottingColors
             }
         })
@@ -91,23 +92,19 @@ export default {
     },
 
 
-    drawChartFactory (chartType) {
+    drawChartFactory (chartType, candidato, indice) {
         var //colorSequence = plottingData.colors || [],
         //["229,57,53", "30,136,229", "251,140,0", "94,53,177", "3,155,229", "0,172,193", "255,179,0", "142,36,170", "57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"],
+            candidatoSelecionado = null,
+            indexCandidatoSelecionado = null,
             colors,
             radius,  
             lineWidth,
             drawFunction = null;
 
+        var noChart = function () {}    
+
         var drawPieChart = function (ctx, dot, d, index) {
-/*
-            if (d.id == '72737-286') {
-                console.error('entrou em 72737-286, index = ' + index)
-                console.log(dot.x, dot.y, radius, d.angulosIniciais[index] - noventaGraus, d.angulosIniciais[index+1] - noventaGraus);
-                console.log(`total de votos: ${d.totalVotos}`)
-                console.log(d.proporcoes[index])
-            }
-  */          
             ctx.beginPath();
             ctx.moveTo(dot.x, dot.y);       
             ctx.arc(dot.x, dot.y, radius, d.angulosIniciais[index] - noventaGraus, d.angulosIniciais[index+1] - noventaGraus);
@@ -138,6 +135,7 @@ export default {
         }
 
         var drawWinnerChart = function (ctx, dot, d, index) {
+            console.log('entrou em drawWinnerChart')
             if (index == d.maisVotado) {
                 ctx.beginPath()
                 ctx.moveTo(dot.x, dot.y)
@@ -216,6 +214,27 @@ export default {
             ctx.closePath()                          
         }
 
+        var drawIndexChart = function (ctx, dot, d, index) {
+            if (index != indexCandidatoSelecionado)
+                return
+
+            var steps = [0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 4.0, 8.0, 10.0, 20.0],
+                valorIndice = d.indices[index] ? (d.indices[index].indiceLQ || 0) : 0,
+                color = 0;
+            for (var i=0; i<steps.length; i++)    
+                if (valorIndice < steps[i])
+                    break
+            color = i / 10   
+
+            ctx.beginPath()
+            ctx.moveTo(dot.x, dot.y)
+            ctx.arc(dot.x, dot.y, radius, 0, doisPI)
+            ctx.fillStyle = `rgba(255,64,64,${color})`
+            ctx.fill()
+            ctx.closePath()
+        }
+
+
 
         const functionsByChartType = {
             'bar'   : drawBarChart,
@@ -225,26 +244,36 @@ export default {
             'winner': drawWinnerChart,
             'pill'  : drawPillChart,
             'hbar'  : drawHorizontalBarChart,
+            'index' : drawIndexChart,
         }       
 
         function drawChart (params) {
             var ctx = params.canvas.getContext('2d')
+
             radius = Math.pow(2, Math.min(params.zoom, 12) / 2.25)
             lineWidth = radius / 4
      
             ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
             posicoesCharts = []
-            console.log('plottingData')
-            console.log(plottingData)
+            console.log(`plottingData.length = ${plottingData.length}`)
+            if (candidatoSelecionado) {
+                indexCandidatoSelecionado = Store.candidatos.indexOf(candidatoSelecionado)
+                console.log(`index do candidato selecionado: ${indexCandidatoSelecionado}`)
+            }
+            else
+                indexCandidatoSelecionado = null
             for (var i = 0; i < plottingData.length; i++) {
-                var d = plottingData[i];
+                var d = plottingData[i],
+                    numCandidatos = (drawFunction == drawIndexChart) ? d.indices.length : d.votos.length;
 
                 if (params.bounds.contains([d.lat, d.long]) && d.totalVotos) {    
                     let dot = params.layer._map.latLngToContainerPoint([d.lat, d.long]); 
-                    for (var j = 0; j < d.votos.length; j++) {
+
+                    for (var j = 0; j < numCandidatos; j++) {
                         colors = d.colors
                         drawFunction(ctx, dot, d, j)
                     }
+
                     posicoesCharts.push({ 
                         id: d.id,
                         bounds: [
@@ -253,19 +282,29 @@ export default {
                         ]
                     })                      
                 }
+                else {
+                    //console.log('não plotou coords ' + d.lat + ', ' + d.long)
+                }
             } 
         }   
+
+        console.error('entrou em setChartType, chartType = ' + chartType)
+        if (candidato) {
+            candidatoSelecionado = Store.obterCandidato(candidato)
+        }
+        else
+            candidatoSelecionado = null
 
         drawFunction = functionsByChartType[chartType]
         if (drawFunction) {
             return drawChart
-        }   
-        return null 
+        } 
+        return noChart
     },
 
 
-    setChartType: function (chartType) {
-        this.onDrawLayer = this.drawChartFactory(chartType)
+    setChartType: function (chartType, candidato, indice) {
+        this.onDrawLayer = this.drawChartFactory(chartType, candidato, indice)
     },
 
 

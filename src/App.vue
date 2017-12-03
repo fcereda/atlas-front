@@ -48,6 +48,7 @@
         :uf="uf"
         @add-candidate="addCandidate"
         @remove-candidate="removeCandidate"
+        @show-indexes="showIndividualIndexes"
       ></atlas-select-candidates>
 
     </v-navigation-drawer>
@@ -56,8 +57,11 @@
 
           <atlas-map 
             :uf="uf"
+            :indexes="individualIndexes"
             style="z-index:0;"
           ></atlas-map>
+
+          <div v-if="individualIndexes" style="position:absolute;width:50px;height:50px;background-color:firebrick;left:100px;top:20px">.</div>
 
     </v-content>
 
@@ -100,6 +104,7 @@
       uf: '',
 //      locationCoords: null,
       candidates: [],
+      individualIndexes: null,
       snackbar: {
         text: 'Erro tentando carregar coordenadas geográficas',
         color: 'error',
@@ -144,7 +149,13 @@
       },
 
       removeCandidate (candidate) {
+        if (this.individualIndexes == candidate)
+          this.individualIndexes = null
         Store.removerCandidato(candidate)  
+      },
+
+      showIndividualIndexes (candidate) {
+        this.individualIndexes = candidate
       },
 
       showSnackbar (text, color) {
