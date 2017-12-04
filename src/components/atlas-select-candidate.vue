@@ -55,7 +55,15 @@
 	    </v-flex>
 
 	    <v-flex sm12 pa-0 pt-2 style="display:flex;">
-	        <span pa-0 class="pa-0" style="flex:1"></span>
+	        <span pa-0 class="pa-0" style="flex:1">
+   	    		<v-btn
+   	    			flat
+   	    			dense
+   	    			color="grey lighten-3"
+	    			@click="showBuscaAvancada = true"
+	    		>Busca avançada
+	    		</v-btn>	
+			</span>
 	    	<span>
 	    		<v-btn 
 	    			right 
@@ -64,10 +72,14 @@
 	    		    :disabled="addCandidateButtonIsDisabled"
 	    		    @click="addCandidate"
 	    		>Adicionar candidato&nbsp;&nbsp;<v-icon>add</v-icon>
-
 	    		</v-btn>
 	    	</span>
 	    </v-flex>		
+
+    <atlas-dialog-busca-avancada
+    	:show="showBuscaAvancada"
+    	@close="showBuscaAvancada = false"
+    ></atlas-dialog-busca-avancada>	
 
     </v-layout>
 
@@ -77,8 +89,13 @@
 
 import axios from 'axios'
 import Utils from '../lib/utils.js'
+import atlasDialogBuscaAvancada from './atlas-dialog-busca-avancada.vue'
 
 export default {
+
+	components: {
+		atlasDialogBuscaAvancada
+	},
 
 	props: ['uf'],
 	
@@ -135,6 +152,8 @@ export default {
 	  	candidatoSelecionado: null,	
 	  	searchCandidates: '', 
 	  	loadingCandidatesList: false,
+
+	  	showBuscaAvancada: false,
 
 	  }
 	},
@@ -226,14 +245,6 @@ export default {
 			}
 			
 			this.loadingCandidatesList = true
-
-			console.log('searching candidates ' + val)
-			console.log({ params: {
-				uf: this.uf,
-				ano: this.ano,
-				nome: val
-			}});
-
 			axios.get('/api/candidatos', { params: {
 				uf: this.uf,
 				ano: this.ano,
@@ -241,8 +252,6 @@ export default {
 				nome: val
 			}})
       		.then(function (response) {
-      			console.log('Data was loaded')
-    			console.log(response)
     			var candidatos = response.data
     			candidatos.forEach((candidato) => {
     				candidato.displayName = candidato.nome + ' (' + candidato.partido + ')'
@@ -258,16 +267,8 @@ export default {
 		},
 
 		setFocusAddCandidate () {
-			console.log('entrou em setfocuscandidate')
 			this.$refs.addCandidate.$el.focus()
 		},
-
-		keypressCandidate (e) {
-
-			console.log(e);
-			e.preventDefault();
-
-		}
 
 	},
 

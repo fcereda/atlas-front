@@ -321,6 +321,21 @@ export default {
         chartCanvas = L.canvasLayer()
             .delegate(this) 
             .addTo(leafletMap);
+
+/*
+        console.log(chartCanvas)
+        chartCanvas.eachLayer(handleLayer)
+
+            function handleLayer(layer) {
+
+                layer.on({
+                    click: (e) => {
+                        console.log('CLICOU NO CANVAS')
+                    }
+                })
+
+            }
+*/
     },
 
     redrawCharts () {

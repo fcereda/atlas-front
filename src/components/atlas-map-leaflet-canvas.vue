@@ -25,7 +25,55 @@
 				v-bind:class="indexChartType==chart.name?'selected-chart':''"
 			><div class="char-icon">{{ chart.label }}</div>
 			</div>	
+
     	</div>	
+
+			<div class="map-controls map-control-chart-type" v-show="displayChartTypes" style="top:200px;" slot="activator">
+				<div 
+					v-for="layer in showDataLayers" 
+					v-show="true" 
+					@click="showMenu" 
+					v-bind:class="chartType==layer.name?'selected-chart':''"
+				>
+					<v-icon class="pa-1" :color="chartType==layer.name?'blue lighten-2':'grey lighten-2'">{{ layer.icon }}</v-icon>
+				</div>
+			</div>	
+
+
+		<v-menu 
+			offset-y 
+			v-model="showLayersMenu" 
+			absolute 
+			:position-x="layersMenuPositionX" 
+			:position-y="layersMenuPositionY" 
+			left
+			full-width
+			z-index="10000"
+		>
+	    <v-list dense>
+	    	<v-subheader>CAMADAS DE DADOS</v-subheader>
+	    	<template v-for="item in dataLayers">
+		        <v-list-tile v-if="item.name" @click="">
+<!--
+            <v-list-tile-action>
+              <v-icon v-show="item.selected">checked</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content>
+              <v-list-tile-title>{{ item.name }}</v-list-tile-title>
+            </v-list-tile-content>
+-->
+
+		        	<v-list-tile-title @click="showLayersMenu = false" >
+		        		<span v-if="item.selected">&check;</span>
+		        		<span v-if="!item.selected">&nbsp;&nbsp;&nbsp;</span>
+		        		<span>&nbsp;&nbsp;{{ item.name }}</span></v-list-tile-title>
+
+		        </v-list-tile>	
+		        <v-divider v-if="!item.name"></v-divider>
+	        </template>
+	      </v-list>
+	    </v-menu>		
+
 
 
 <!--
@@ -51,6 +99,8 @@
 
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
+import axios from 'axios'
+import chroma from 'chroma-js'
 
 import atlasSearchMunicipalities from './atlas-search-municipalities.vue'
 
@@ -106,6 +156,8 @@ export default {
 
 			brazilBoundaries: [],
 
+			topoLayer: null,
+
 			chartCanvas: null,
 			displayChartTypes: false,
 			chartTypes: [{
@@ -125,6 +177,7 @@ export default {
 				icon: 'format_align_left'
 			}],
 			chartType: 'winner',
+
 			indexChartTypes: [{
 				name: 'indiceG',
 				label: 'G'
@@ -133,8 +186,40 @@ export default {
 				label: 'LQ'
 			}],
 			indexChartType: 'indiceLQ',	
-			mostrarIndicesIndividuais: false
 
+			showDataLayers: [{
+				name: 'on',
+				icon: 'layers'
+			}],
+			dataLayers: [{
+				name: 'IDH em 2000',
+				id: 'idh2000'
+			}, {
+				name: 'IDH em 2010',
+				id: 'idh2010',
+				selected: true
+
+			}, {
+				name: 'Renda per capita 2010',
+				id: 'rendaPC2010'
+			}, {
+				name: 'Renda per capita 2012',
+				id: 'rendaPC2012'
+			}, {
+				name: 'Densidade demográfica',
+				id: 'densidade'
+			}, {
+				name: null,
+				id: 0,
+			}, {
+				name: 'Esconder camada de dados',
+				id: 'nolayer'
+			}],
+			showLayersMenu: false,
+			layersMenuPositionX: 300,
+			layersMenuPositionY: 400,
+
+			mostrarIndicesIndividuais: false
 		}
 
 	},
@@ -152,9 +237,13 @@ export default {
 		uf () {
 			if (this.uf) {
 				this.flyToState(this.uf.sigla)
+				this.drawStateBorders()
+				if (this.uf.sigla == 'SP')
+					this.drawMunicipalities()
 			}
 			else {
 				Charts.removeCharts()
+				this.removeStateBorders()
 				this.fitBoundsToBrazil()
 			}
 		},
@@ -187,39 +276,44 @@ export default {
 			}
 		})
 
+		var that = this
 		var onHover = function (e) {
+			// This function is an called by the Leaflet element,
+			// thus the event object is a different from the regular one
 			var posicoesCharts = Charts.posicoesCharts,
 				chartsEncontrados = []
 		    for (let i = posicoesCharts.length - 1; i >= 0; i--) {
 				let thisPosicao = posicoesCharts[i].bounds,
-		    		x = e.offsetX, 
-		    		y = e.offsetY 
+		    		x = e.containerPoint.x, //e.offsetX, 
+		    		y = e.containerPoint.y  //e.offsetY 
 				if (thisPosicao[0][0] <= x &&
 		    		thisPosicao[0][1] <= y &&
 		    		thisPosicao[1][0] >= x &&
 		    		thisPosicao[1][1] >= y) {
 		  			chartsEncontrados.push(posicoesCharts[i].id)
-		  			//return;
 	        	}
 	    	}
-	    	this.zonasSobMouse = chartsEncontrados
+	    	that.zonasSobMouse = chartsEncontrados
 	    	if (chartsEncontrados.length) {
-	    		console.log('Hovering over ' + chartsEncontrados.join(', '))
-	    		this.mouseOverChart = true
+	    		//console.log('Hovering over ' + chartsEncontrados.join(', '))
+	    		that.mouseOverChart = true
 	    		//this.$emit('hover', chartsEncontrados)
 	    	}
 	    	else {
-	    		this.mouseOverChart = false
+	    		that.mouseOverChart = false
 	    	}	
 		}
-		this.$refs.map.addEventListener('mouseover', onHover.bind(this))		
-		this.$refs.map.addEventListener('mousemove', onHover.bind(this))
+		//this.$refs.map.addEventListener('mouseover', onHover.bind(this))		
+		//this.$refs.map.addEventListener('mousemove', onHover.bind(this))
 
 		var onClick = function (e) {
+			var posicoesCharts = Charts.posicoesCharts
+			for (var i=0; i<posicoesCharts.length; i++)
+				console.log(posicoesCharts[i].bounds[0][0], posicoesCharts[i].bounds[0][1])
 			if (this.zonasSobMouse && this.zonasSobMouse.length)
 				this.$emit('click', this.zonasSobMouse)
 		}
-		this.$refs.map.addEventListener('click', onClick.bind(this))
+		//this.$refs.map.addEventListener('click', onClick.bind(this))
 
 		// this.onAlterouCandidatos() will be called every time a candidate 
 		// is added to or removed from Store.the candidatos list
@@ -238,9 +332,29 @@ export default {
 		}).addTo(this.map);
 		this.fitBoundsToBrazil();
 
-		Charts.setUpCanvasLayer(this.map)
-	},
+		this.map.addEventListener('mouseover', onHover.bind(this))		
+		this.map.addEventListener('mousemove', onHover.bind(this))
+		this.map.addEventListener('click', onClick.bind(this))
 
+		Charts.setUpCanvasLayer(this.map)
+
+// Code by Ryan Clark (https://blog.webkid.io/maps-with-leaflet-and-topojson/)
+
+L.TopoJSON = L.GeoJSON.extend({  
+  addData: function(jsonData) {    
+    if (jsonData.type === 'Topology') {
+      for (var key in jsonData.objects) {
+        var geojson = topojson.feature(jsonData, jsonData.objects[key]);
+        L.GeoJSON.prototype.addData.call(this, geojson);
+      }
+    }    
+    else {
+      L.GeoJSON.prototype.addData.call(this, jsonData);
+    }
+  }  
+});
+
+    },
 
 	methods: {
 
@@ -291,6 +405,116 @@ export default {
 			this.map.flyTo(center, zoom)
 
 		},	
+
+		showMenu (e) {
+			console.error('entrou em ShowMenu')
+	        e.preventDefault()
+	        this.showLayersMenu = false
+	        this.layersMenuPositionX = e.clientX
+	        this.layersMenuPositionY = e.clientY
+	        console.log(this.layersMenuX, this.layersMenuY)
+	        var that = this
+	        this.$nextTick(() => {
+	          that.showLayersMenu = true
+	          console.log(this.showLayersMenu)
+	        })  
+		},
+
+		drawStateBorders () {
+
+			var that = this
+
+			function handleLayer(layer) {
+				layer.setStyle({
+				    fillColor: 'rgba(255, 255, 255)',
+				    fillOpacity: 0.0,
+				    color: '#444',
+				    weight: 2,
+				    opacity: 0.4
+				});
+
+				layer.on({
+					click: (e) => {
+						console.log('clicou no mapa')
+						console.log(that.zonasSobMouse)
+						if (that.zonasSobMouse && that.zonasSobMouse.length)
+							that.$emit('click', that.zonasSobMouse)
+						return true
+					}
+				})
+
+			}
+
+			function addTopoData(topoData) { 
+			    topoLayer.addData(topoData);
+			    topoLayer.addTo(that.map);
+			    topoLayer.eachLayer(handleLayer);
+			}
+	
+			if (this.topoLayer)
+				this.map.removeLayer(this.topoLayer)
+
+			console.log('L.TopoJSON')
+			console.log(L.TopoJSON)
+			const topoLayer = new L.TopoJSON();
+			this.topoLayer = topoLayer
+			
+			//var that = this  		// Hack to go around the change in context in addTopoData()
+			var topoFileAddress = `/public/maps/state/${this.uf.sigla.toLowerCase()}-state.json`
+			axios.get(topoFileAddress)
+			.then((response) => addTopoData(response.data))
+			//.catch((error) => console.error(error))
+
+		},
+
+		removeStateBorders () {
+			if (this.topoLayer)
+				this.map.removeLayer(this.topoLayer)
+		},
+
+		drawMunicipalities () {
+			var topoFileAddress = '/public/maps/topojson-brasil/35.json'
+			//topoFileAddress = "http://servicodados.ibge.gov.br/api/v2/malhas/35?resolucao=5"
+
+			var that = this
+
+			const colorScale = chroma
+  				.scale(['#D5E3FF', '#003171'])
+  				.domain([0,1]);
+
+  			console.error()	
+
+			function handleLayer(layer) {
+				layer.setStyle({
+				    fillColor: `rgb(${colorScale(Math.random()).rgb().join(',')})`,
+				    fillOpacity: 0.3,
+				    color: '#444',
+				    weight: 0,
+				    opacity: 0.6
+				});
+
+			}
+
+
+			function addTopoData(topoData) { 
+			    topoLayer.addData(topoData);
+			    topoLayer.addTo(that.map);
+			    topoLayer.eachLayer(handleLayer);
+			}
+	
+			if (this.topoLayer)
+				this.map.removeLayer(this.topoLayer)
+
+			console.log('L.TopoJSON')
+			console.log(L.TopoJSON)
+			const topoLayer = new L.TopoJSON();
+			this.topoLayer = topoLayer
+			
+			//var that = this  		// Hack to go around the change in context in addTopoData()
+//			var topoFileAddress = `/public/maps/state/${this.uf.sigla.toLowerCase()}-state.json`
+			axios.get(topoFileAddress)
+			.then((response) => addTopoData(response.data))
+		},
 
 		onResize () {
 

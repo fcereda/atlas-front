@@ -57,8 +57,8 @@
 			</div>
 			<div class="pb-1" style="display:flex;flex-direction:row;">
 				<span style="flex:1"></span>
-				<v-btn color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
-				<v-btn v-show="!indicesIndividuais" color="primary" :disabled="disabled" @click="verIndicesIndividuais">Índices individuais</v-btn>
+				<v-btn v-if="false" color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
+				<v-btn v-show="!indicesIndividuais" color="primary" :disabled="disabled" @click="verIndicesIndividuais">Ver índices individuais</v-btn>
 				<v-btn v-show="indicesIndividuais" color="primary" :disabled="disabled" @click="esconderIndicesIndividuais">Voltar a comparações</v-btn>				
 			</div>
 		</div>	

@@ -138,6 +138,7 @@
         Store.removerTodosCandidatos()
         this.modoInicial = true
         this.uf = ''
+        this.mostrarPainelZonas = false
       },
 
       changeUf (uf) {
