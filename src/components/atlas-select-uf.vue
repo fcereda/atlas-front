@@ -15,7 +15,7 @@
               @input="setUf"
             ></v-select>
 
-
+<!--
 		    <v-menu offset-y class="width100" v-show="false">
 		      <v-btn large block elevation-4 color="primary" slot="activator">{{ title }}</v-btn>
 		      <div style="height:400px">
@@ -26,7 +26,7 @@
 		      </v-list>
 		      </div>
 		    </v-menu>
-
+-->
 
 	    </v-flex>
 	</v-layout>

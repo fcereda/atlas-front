@@ -236,15 +236,19 @@ export default {
 		var cargoETurno = getCargoETurno(cargo, uf)
 		cargo = cargoETurno.cargo
 		var turno = cargoETurno.turno
-		var query = addQuery(null, 'cargo', cargo)
-		query = addQuery(query, 'ano', ano)
+		var query = addQuery(null, 'ano', ano)
+		query = addQuery(query, 'cargo', cargo)
 		query = addQuery(query, 'agregacao_politica', 4) 
 		query = addQuery(query, 'agregacao_regional', 7)
 		query = query + '&' + buildSearchQuery('NUM_TURNO', turno, 0)
 		query = query + '&' + buildSearchQuery('UF', uf, 1)
 
+		// No time for niceties. The query below is guaranteed to work:
+		query = `?ano=${ano}&cargo=${cargo}&agregacao_regional=7&agregacao_politica=4&columns[0][name]=UF&columns[0][search][value]=${uf}&columns[1][name]=NUM_TURNO&columns[1][search][value]=${turno}`
 		console.log(query);
 
+/*
+		// Fallback para o caso de a API "/tse" do CEPESP parar de funcionar novamente
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/votos' + query)
 			.then((response) => {
@@ -259,9 +263,9 @@ export default {
 				totalVotesByZoneAndCity[idEleicao] = data
 				resolve(data)	
 			})
+*/
 
-/*
-		O CÓDIGO ABAIXO ESTÁ CORRETO E ESTAVA FUNCIONANDO, MAS ALGUMA COISA ACONTECEU COM A API DO CEPESP!!
+		//O CÓDIGO COSTUMA FUNCIONAR, MAS ÀS VEZES A API DO CEPESP DÁ PROBLEMA
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/tse' + query)
 			.then((response) => {
@@ -288,7 +292,7 @@ export default {
 				totalVotesByZoneAndCity[idEleicao] = totalVotos
 				resolve(totalVotos)
 			})
-*/			
+
 			.catch((error) => {
 				reject(error)
 			})

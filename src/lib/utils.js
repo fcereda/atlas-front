@@ -1,3 +1,32 @@
+const CARGOS_CURTO = {
+	'pr1': 'Presidente T1',
+	'pr2': 'Presidente T2',
+	'g1' : 'Governador T1',
+	'g2' : 'Governador T2',
+	's'  : 'Senador',
+	'df' : 'D Federal',
+	'de' : 'D Estadual',
+	'dd' : 'D Distrital',
+	'pm1': 'Prefeito T1',
+	'pm2': 'Prefeito T2',
+	'v'	 : 'Vereador'
+}
+
+const CARGOS = {
+	'pr1': 'Presidente 1º turno',
+	'pr2': 'Presidente 2º turno',
+	'g1' : 'Governador 1º turno',
+	'g2' : 'Governador 2º turno',
+	's'  : 'Senador',
+	'df' : 'Deputado Federal',
+	'de' : 'Deputado Estadual',
+	'dd' : 'Deputado Distrital',
+	'pm1': 'Prefeito 1º turno',
+	'pm2': 'Prefeito 2º turno',
+	'v'	 : 'Vereador'
+}
+
+
 export default {
 
 	capitalizeName (name) {
@@ -31,24 +60,22 @@ export default {
 
 	},
 
-	obterNomeCargo (codigoCargo) {
+	obterNomeCargo (codigoCargo, curto) {
 
-		const cargos = {
-			'pr1': 'Presidente T1',
-			'pr2': 'Presidente T2',
-			'g1' : 'Governador T1',
-			'g2' : 'Governador T2',
-			's'  : 'Senador',
-			'df' : 'D Federal',
-			'de' : 'D Estadual',
-			'dd' : 'D Distrital',
-			'pm1': 'Prefeito T1',
-			'pm2': 'Prefeito T2',
-			'v'	 : 'Vereador'
-		}
-
-		return cargos[codigoCargo]
+		return curto ? CARGOS_CURTO[codigoCargo] : CARGOS[codigoCargo]
 
 	},	
+
+	obterCargos (curto) {
+		var cargosArray = [],
+			objBase = curto ? CARGOS_CURTO : CARGOS
+		for (var id in objBase) {
+			cargosArray.push({
+				id,
+				name: CARGOS[id]
+			})
+		}
+		return cargosArray
+	}
 
 }

@@ -78,6 +78,7 @@
 
     <atlas-dialog-busca-avancada
     	:show="showBuscaAvancada"
+    	:uf="uf"
     	@close="showBuscaAvancada = false"
     ></atlas-dialog-busca-avancada>	
 

@@ -28,16 +28,17 @@
 
     	</div>	
 
-			<div class="map-controls map-control-chart-type" v-show="displayChartTypes" style="top:200px;" slot="activator">
-				<div 
-					v-for="layer in showDataLayers" 
-					v-show="true" 
-					@click="showMenu" 
-					v-bind:class="chartType==layer.name?'selected-chart':''"
-				>
-					<v-icon class="pa-1" :color="chartType==layer.name?'blue lighten-2':'grey lighten-2'">{{ layer.icon }}</v-icon>
-				</div>
-			</div>	
+		<!-- Para habilitar as camadas de dados, remova a diretiva  v-if="false" abaixo -->
+		<div v-if="false" class="map-controls map-control-chart-type" v-show="displayChartTypes" style="top:200px;" slot="activator">
+			<div 
+				v-for="layer in showDataLayers" 
+				v-show="true" 
+				@click="showMenu" 
+				v-bind:class="chartType==layer.name?'selected-chart':''"
+			>
+				<v-icon class="pa-1" :color="chartType==layer.name?'blue lighten-2':'grey lighten-2'">{{ layer.icon }}</v-icon>
+			</div>
+		</div>	
 
 
 		<v-menu 
@@ -54,20 +55,10 @@
 	    	<v-subheader>CAMADAS DE DADOS</v-subheader>
 	    	<template v-for="item in dataLayers">
 		        <v-list-tile v-if="item.name" @click="">
-<!--
-            <v-list-tile-action>
-              <v-icon v-show="item.selected">checked</v-icon>
-            </v-list-tile-action>
-            <v-list-tile-content>
-              <v-list-tile-title>{{ item.name }}</v-list-tile-title>
-            </v-list-tile-content>
--->
-
 		        	<v-list-tile-title @click="showLayersMenu = false" >
 		        		<span v-if="item.selected">&check;</span>
 		        		<span v-if="!item.selected">&nbsp;&nbsp;&nbsp;</span>
 		        		<span>&nbsp;&nbsp;{{ item.name }}</span></v-list-tile-title>
-
 		        </v-list-tile>	
 		        <v-divider v-if="!item.name"></v-divider>
 	        </template>
@@ -238,8 +229,8 @@ export default {
 			if (this.uf) {
 				this.flyToState(this.uf.sigla)
 				this.drawStateBorders()
-				if (this.uf.sigla == 'SP')
-					this.drawMunicipalities()
+				//if (this.uf.sigla == 'SP')
+				//	this.drawMunicipalities()	// Just a test
 			}
 			else {
 				Charts.removeCharts()
@@ -472,17 +463,16 @@ L.TopoJSON = L.GeoJSON.extend({
 				this.map.removeLayer(this.topoLayer)
 		},
 
-		drawMunicipalities () {
-			var topoFileAddress = '/public/maps/topojson-brasil/35.json'
-			//topoFileAddress = "http://servicodados.ibge.gov.br/api/v2/malhas/35?resolucao=5"
 
+		// Not currently in use
+		drawMunicipalities () {
+			var topoFileAddress = '/public/maps/topojson-brasil/35.json' 		// São Paulo
+			//topoFileAddress = "http://servicodados.ibge.gov.br/api/v2/malhas/35?resolucao=5"
 			var that = this
 
 			const colorScale = chroma
   				.scale(['#D5E3FF', '#003171'])
   				.domain([0,1]);
-
-  			console.error()	
 
 			function handleLayer(layer) {
 				layer.setStyle({
@@ -492,9 +482,7 @@ L.TopoJSON = L.GeoJSON.extend({
 				    weight: 0,
 				    opacity: 0.6
 				});
-
 			}
-
 
 			function addTopoData(topoData) { 
 			    topoLayer.addData(topoData);
@@ -505,13 +493,9 @@ L.TopoJSON = L.GeoJSON.extend({
 			if (this.topoLayer)
 				this.map.removeLayer(this.topoLayer)
 
-			console.log('L.TopoJSON')
-			console.log(L.TopoJSON)
 			const topoLayer = new L.TopoJSON();
 			this.topoLayer = topoLayer
 			
-			//var that = this  		// Hack to go around the change in context in addTopoData()
-//			var topoFileAddress = `/public/maps/state/${this.uf.sigla.toLowerCase()}-state.json`
 			axios.get(topoFileAddress)
 			.then((response) => addTopoData(response.data))
 		},

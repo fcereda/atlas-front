@@ -49,7 +49,6 @@
       <v-btn flat color="black" @click.native="snackbar.visible = false">Fechar</v-btn>
     </v-snackbar>
 
-
 </div> 
 
 </template>
@@ -88,6 +87,7 @@ export default {
 
     	candidatosSelecionados: [],
     	colorSequence: new Colors.ColorSequence('categorical'),
+    	showBuscaAvancada: false,
     	snackbar: {
     		text: 'Erro tentando carregar dados',
     		visible: false
