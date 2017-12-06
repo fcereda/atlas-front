@@ -14,6 +14,7 @@
 			:cargo="candidato.cargo"
 			:ano="candidato.ano"
 			:color="candidato.color"
+			:classificacao="candidato.classificacao"
 			:total="candidato.total"
 			:indiceLQ="candidato.somaIndiceLQ"
 			:indiceG="candidato.somaIndiceG"
@@ -32,7 +33,7 @@
 	    <p></p>
 
 		<atlas-select-candidate
-			:uf="uf.sigla"
+			:uf="uf"
 			@add-candidate="addCandidate">
 		</atlas-select-candidate>
 
@@ -109,6 +110,8 @@ export default {
     			totalVotos = {},
     			totalGeral = 0
 
+    		console.log('candidateObj:')
+    		console.log(candidateObj)
     		this.candidatosSelecionados.push(candidateObj)
     		api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {

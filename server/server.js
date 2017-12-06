@@ -1,31 +1,35 @@
 'use strict'
 
-var express = require('express');
-var app = express();
-var router = express.Router();
-var bodyParser = require('body-parser');
+var express = require('express')
+var app = express()
+var router = express.Router()
+var bodyParser = require('body-parser')
 const fs = require('fs')
 var parse = require('csv-parse')
-
-router.use(function (req, res, next) {
-	console.log(req.path);
-	next();
-});			
 
 var arqCandidatos = './data/candidatos.csv',
 	arqCoords = './data/coords.csv',
 	port = 8008,
 	verbose = false,
+	debugMode = false,
  	candidatos = [],
 	coordsArray = [],
 	coordenadas = {},
 	coordenadasPorUf = {}
+
+router.use(function (req, res, next) {
+	if (debugMode) {
+		console.log(req.path)
+	}	
+	next()
+})	
 
 function getOptions () {
 	const commandLineArgs = require('command-line-args')
  
 	const optionDefinitions = [
 	  { name: 'verbose', alias: 'v', type: Boolean, help: 'Modo verboso' },
+	  { name: 'debug', alias: 'd', type: Boolean, help: 'Modo de depuração'},
 	  { name: 'port', alias: 'p', type: Number, multiple: false, defaultOption: 8000, help: 'A porta à qual o servidor vai responder. Default é 8000' },
 	  { name: 'candidatos', alias: 'a', type: String, defaultOption: './data/candidatos.csv', help: 'Nome do arquivo de candidatos. Default é ./data/candidatos.csv' },
 	  { name: 'coords', alias: 'c', type: String, defaultOption: './data/coords.csv', help: 'Nome do arquivo de coordenadas. Default é ./data/coords.csv' }
@@ -33,12 +37,12 @@ function getOptions () {
 
 	var options = commandLineArgs(optionDefinitions, {partial: true})
 	if (options._unknown) {
-		console.log('Servidor do CEPESP Atlas Eleitoral')
-		console.log('Opcões:')
+		print('Servidor do CEPESP Atlas Eleitoral')
+		print('Opcões:')
 		optionDefinitions.forEach((definition) => console.log('    --' + definition.name + ' ou -' + definition.alias + ': ' + definition.help))
-		process.exit();
+		process.exit()
 	}
-	return options;
+	return options
 }
 
 function print () {
@@ -51,30 +55,32 @@ function verboseprint () {
 }
 
 
-function filterCandidates (uf, ano, cargo, nome) {
+function filterCandidates (uf, ano, cargo, nome, partido) {
 	return candidatos.filter((candidato) => {
 		if (uf && candidato.uf != uf)
-			return false;
+			return false
 		if (ano && candidato.ano != ano)
-			return false;
+			return false
 		if (cargo && candidato.cargo != cargo)
-			return false;
+			return false
 		if (nome && candidato.nome.indexOf(nome) < 0)
-			return false;
-		return true;
-	});
+			return false
+		if (partido && candidato.partido != partido)
+			return false
+		return true
+	})
 }
 
 router.route('/api/candidatos')
 	.get(function (req, res) {
-		var { uf, ano, cargo, nome } = req.query;
-		if (cargo == 'pr1' || cargo == 'pr2')
-			uf = null
+		var { uf, ano, cargo, nome, partido } = req.query
+		//if (cargo == 'pr1' || cargo == 'pr2')
+		//	uf = null
 		if (uf)
 			uf = uf.toUpperCase()
 		if (nome)
-			nome = nome.toUpperCase();
-		return res.json(filterCandidates(uf, ano, cargo, nome))
+			nome = nome.toUpperCase()
+		return res.json(filterCandidates(uf, ano, cargo, nome, partido))
 	})
 
 router.route('/api/coordenadas')
@@ -91,18 +97,22 @@ router.route('/api/coordenadas')
 	})
 	
 
+
 function parseCandidateRow (row) {
 
 	const cargos = ['pr', 'vpr', 'g', 'vg', 's', 'df', 'de', 'de', '1s', '2s']
 
-	var nome = row[6],
-		uf = row[2],
-		ano = row[0],
-		partido = row[9],
-		cargo = cargos[parseInt(row[4]) - 1],
-		numero = parseInt(row[7])
+	var nome = row['NOME_CANDIDATO'],
+		uf = row['UF'] || row['SIGLA_UF'],
+		ano = row['ANO_ELEICAO'],
+		partido = row['SIGLA_PARTIDO'],
+		cargo = cargos[parseInt(row['CODIGO_CARGO']) - 1],
+		numero = parseInt(row['NUMERO_CANDIDATO']),
+		classificacao = parseInt(row['CLASSIFICACAO'] || -1),
+		votacao = parseInt(row['QTDE_VOTOS'])
+
 	if (cargo == 'pr' || cargo == 'g')
-		cargo = cargo + row[1]
+		cargo = cargo + row['NUM_TURNO']
 	return {
 		nome,
 		uf,
@@ -110,7 +120,9 @@ function parseCandidateRow (row) {
 		partido,
 		cargo,
 		numero,
-		id: uf + '-' + ano + '-' + cargo + '-' + numero
+		id: uf + '-' + ano + '-' + cargo + '-' + numero,
+		classificacao,
+		votacao
 	}
 }	
 
@@ -135,25 +147,25 @@ function parseCoordinateRow (row) {
 }
 
 
-
 var options = getOptions()
 port = options.port || port
 arqCandidatos = options.candidatos || arqCandidatos
 arqCoords = options.coords || arqCoords
 verbose = options.verbose || verbose
+debugMode = options.debug || debugMode
 
 print('Servidor do CEPESP Atlas Eleitoral')
 
 print('Loading candidates...')
-var fileName = arqCandidatos
 try {
-	var fileData = fs.readFileSync(fileName);
-    parse(fileData, {delimiter: ',', trim: true, from: 2}, function (err, rows) {
+	var fileData = fs.readFileSync(arqCandidatos)
+    parse(fileData, {delimiter: ',', trim: true, columns: true}, function (err, rows) {
     	if (err) {
-    		console.error(`Error trying to parse file {fileName}`)
+    		console.error(`Error trying to parse file ${arqCandidatos}`)
+    		console.error(err)
     		process.exit()
     	}
- 		print(rows.length + ' candidatos carregados');
+ 		print(rows.length + ' candidatos carregados')
     	candidatos = rows.map((row) => parseCandidateRow(row))
   	})
 }  	
@@ -162,16 +174,15 @@ catch (error) {
 	process.exit()
 }
 
-console.log('Loading coordinates...')
-fileName = arqCoords
+print('Loading coordinates...')
 try {
-	var fileData = fs.readFileSync(fileName);
+	var fileData = fs.readFileSync(arqCoords)
 	parse(fileData, {delimiter: ',', trim: true, from: 2}, function (err, rows) {
 		if (err) {
-    		console.error(`Error trying to parse file {fileName}`)
+    		console.error(`Error trying to parse file ${arqCoords}`)
     		process.exit()
     	}
-    	console.log(rows.length + ' coordenadas carregadas')
+    	print(rows.length + ' coordenadas carregadas')
     	coordsArray = rows.map((row) => parseCoordinateRow(row))
     	coordenadas = coordsArray.reduce((coordenadas, coord) => {
 			var id = coord.id
@@ -189,17 +200,17 @@ try {
     	if (verbose)
     		Object.entries(coordenadasPorUf).forEach(([uf, coords]) => print(uf + ': ' + coords.length + ' coordenadas carregadas'))
     	// We assume this will be the last line to be executed when all data files are loaded
-    	print('Servidor do CEPESP Atlas Eleitoral operando na porta ' + port);
-	});
+    	print('Servidor do CEPESP Atlas Eleitoral operando na porta ' + port)
+	})
 }
 catch (error) {
-	console.log('Error trying to open file ' + fileName)
+	console.error('Error trying to open file ' + fileName)
 	process.exit()
 }
 
 
-app.use('', router);
-app.listen(port);
+app.use('', router)
+app.listen(port)
 
 
 

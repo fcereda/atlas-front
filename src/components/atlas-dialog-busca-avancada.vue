@@ -13,6 +13,7 @@
                   label="Ano"
                   v-model="anoSelecionado" 
                   v-bind:items="anos" 
+                  clearable
                   hide-details 
                 ></v-select>
               </v-flex>
@@ -23,6 +24,7 @@
                   v-bind:items="cargos" 
                   item-text="name"
                   item-value="id"
+                  clearable
                   hide-details 
                 ></v-select>
               </v-flex>
@@ -34,17 +36,20 @@
                       max-height="400"
                       hint="Múltiplas escolhas"
                       autocomplete
+                      clearable
                       @keydown.native="selectOnKey"
                       @keyup.native="selectOnKey"
                       @keypress.native="selectOnKey"
                   ></v-select>
               </v-flex>
-              <v-flex xs12 sm6 md6>
+              <v-flex xs12 sm12 md12>
                 <v-text-field label="Nome" v-model="nomeSelecionado" required hint="Basta digitar parte do nome"></v-text-field>
               </v-flex>
+<!--
               <v-flex xs12 sm6 md6>
                 <v-text-field label="Limitar aos votados em" hint="Escolha um município"></v-text-field>
               </v-flex>
+-->              
               <v-flex xs12>
 
   <v-data-table
@@ -67,8 +72,8 @@
       </td>
       <td class="pl-0 text-xs-left">{{ props.item.nome }} ({{ props.item.partido }})</td>
       <td class="text-xs-right">{{ props.item.ano }}</td>
-      <td class="text-xs-right">{{ props.item.cargo }}</td>
-      <td class="text-xs-right">{{ props.item.votosFormatado }}</td>
+      <td class="text-xs-right">{{ props.item.nomeCargo }}</td>
+      <td class="text-xs-right">{{ props.item.votacaoFormatada }}</td>
     </template>
   </v-data-table>
 
@@ -79,7 +84,7 @@
         </v-card-text>
         <v-card-actions>
 
-          <v-btn color="orange darken-2" flat :disabled="!candidatosSelecionados.length" @click.native="closeDialog">
+          <v-btn color="orange darken-2" flat :disabled="!candidatosSelecionados.length" @click.native="adicionarCandidatosSelecionados">
             {{ candidatosSelecionados.length > 0 ? (`Adicionar candidato${ candidatosSelecionados.length > 1 ? 's selecionados' : ' selecionado' }` ) : 'Selecione os candidatos que deseja adicionar' }}</v-btn>
           <v-spacer></v-spacer>
           
@@ -126,26 +131,9 @@ export default {
           },
           { text: 'Ano', value: 'ano' },
           { text: 'Cargo', value: 'cargo' },
-          { text: 'Votos', value: 'votos', align:'right' }
+          { text: 'Votação', value: 'votacao', align:'right' }
         ],
-        candidatosEncontrados: [{
-          id: 1,
-          nome: 'Geraldinho Picolé de Chuchu',
-          ano: 2010,
-          partido: 'PSDB',
-          cargo: "Governador T1",
-          votos: 15100200,
-          votosFormatado: '15.100.200'
-        }, {
-          id: 2,
-          nome: 'Paulo Salim Maluf',
-          ano: 2010,
-          partido: 'PP',
-          cargo: 'Deputado Federal',
-          votos: 290093,
-          votosFormatado: '290.093'
-        }],
-        //candidatoSelecionado: null,
+        candidatosEncontrados: [],
         candidatosSelecionados: [],
 
         procurandoCandidatos: false,
@@ -216,22 +204,20 @@ export default {
         }
         
         this.procurandoCandidatos = true
-        console.log(this.uf)
-        console.log(this.anoSelecionado)
-        console.log(this.cargoSelecionado)
-        console.log(this.nomeSelecionado)
         axios.get('/api/candidatos', { params: {
           uf: this.uf.sigla,
           ano: this.anoSelecionado,
-          cargo: this.cargoSelecionado ? this.cargoSelecionado.id : null,
-          nome: this.nomeSelecionado
+          cargo: this.cargoSelecionado,
+          nome: this.nomeSelecionado,
+          partido: this.partidoSelecionado
         }})
         .then(function (response) {
             var candidatos = response.data
             candidatos.forEach((candidato) => {
               candidato.nome = Utils.capitalizeName(candidato.nome)
               candidato.displayName = candidato.nome + ' (' + candidato.partido + ')'
-              candidato.cargo = Utils.obterNomeCargo(candidato.cargo)
+              candidato.nomeCargo = Utils.obterNomeCargo(candidato.cargo)
+              candidato.votacaoFormatada = Utils.formatInt(candidato.votacao)
             })
             this.candidatosEncontrados = orderCandidatesByRelevance(candidatos, this.nomeSelecionado)
             this.procurandoCandidatos = false
@@ -242,6 +228,12 @@ export default {
         }.bind(this))
       
       },
+
+      adicionarCandidatosSelecionados () {
+        this.$emit('add-candidates', this.candidatosSelecionados)
+        this.candidatosSelecionados = []
+        this.closeDialog()
+      }
 
     }
 

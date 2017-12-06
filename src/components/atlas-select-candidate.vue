@@ -38,7 +38,6 @@
 	       		label="Candidato ou partido"
 	       		:loading="loadingCandidatesList"
 	       		:search-input.sync="searchCandidates"
-	       		nudge-bottom="20px"
 	       		@input="setFocusAddCandidate"
 	       		style="z-index:10000;"
 	       	>
@@ -80,6 +79,7 @@
     	:show="showBuscaAvancada"
     	:uf="uf"
     	@close="showBuscaAvancada = false"
+	    @add-candidates="addMultipleCandidates"    	
     ></atlas-dialog-busca-avancada>	
 
     </v-layout>
@@ -195,19 +195,28 @@ export default {
 			this.searchCandidates = this.queryCandidates()
 		},
 
-		addCandidate () {
-			var { nome, partido, numero } = this.candidatoSelecionado,
-				cargo = this.cargo,
-				ano = parseInt(this.ano),	
+		adicionarCandidato (candidato) {
+			var { nome, cargo, ano, partido, numero, classificacao, votacao } = candidato,
 				newCandidate = {
 					nome: Utils.capitalizeName(nome), 
-					ano, 
+					ano: parseInt(ano), 
 					cargo, 
 					partido,
-					numero
+					numero,
+					classificacao,
+					votacao
 				}
 			this.$emit('add-candidate', newCandidate)
+		},
+
+		addCandidate () {
+			this.adicionarCandidato({...this.candidatoSelecionado, cargo: this.cargo, ano: this.ano})
 			this.candidatoSelecionado = null
+		},
+
+		addMultipleCandidates (candidatosSelecionados) {
+			candidatosSelecionados.forEach((candidato) => console.log(candidato))
+			candidatosSelecionados.forEach((candidato) => this.adicionarCandidato(candidato))
 		},
 
 		queryCandidates (val) {
@@ -247,7 +256,7 @@ export default {
 			
 			this.loadingCandidatesList = true
 			axios.get('/api/candidatos', { params: {
-				uf: this.uf,
+				uf: this.uf.sigla,
 				ano: this.ano,
 				cargo: this.cargo,
 				nome: val

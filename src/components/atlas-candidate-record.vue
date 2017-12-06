@@ -48,7 +48,8 @@
 				class="pr-2 pb-1" 
 				style="width:100%;text-align:right;"
 			>
-				Total de votos{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ totalStr }}
+				<div>Total de votos{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ totalStr }}</div>
+				<div>Classificação{{ cargo == 'pr1' || cargo == 'pr2' ? ' neste estado' : ''}}: {{ classificacao }}</div>
 <!--
 				<br>
 				Índice LQ: {{ indiceLQ }}<br>
@@ -143,7 +144,7 @@ import Utils from '../lib/utils.js'
 
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'total', 'indiceLQ', 'indiceG', 'tipo', 'loading', 'disabled', 'showDetails'],
+	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'classificacao', 'total', 'indiceLQ', 'indiceG', 'tipo', 'loading', 'disabled', 'showDetails'],
 
 	data () {
 
