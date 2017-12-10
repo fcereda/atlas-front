@@ -53,7 +53,7 @@
 -->
 
 		<!-- Para habilitar as camadas de dados, remova a diretiva  v-if="false" abaixo -->
-		<div class="map-controls map-control-chart-type" v-show="displayChartTypes" style="top:228px;" slot="activator">
+		<div class="map-controls map-control-data-layers" v-show="displayChartTypes" slot="activator">
 			<div 
 				v-for="layer in showDataLayers" 
 				v-show="true" 
@@ -78,7 +78,7 @@
 		    <v-list dense>
 		    	<v-subheader>CAMADAS DE DADOS</v-subheader>
 		    	<template v-for="item in dataLayers">
-			        <v-list-tile v-if="item.name" @click="">
+			        <v-list-tile v-if="item.name" @click="showDataLayer(item)">
 			        	<i class="material-icons" :style="item.selected ? 'color:#aaa;' : 'color:transparent;'">done</i>&nbsp;
 			        	<v-list-tile-title @click="showLayersMenu = false" >
 			        		<span>{{ item.name }}</span></v-list-tile-title>
@@ -123,14 +123,17 @@ import api from '../lib/api.js'
 import utils from '../lib/utils.js'
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
+import DataLayers from '../lib/datalayers.js'
 import axios from 'axios'
 import chroma from 'chroma-js'
 
 import atlasSearchMunicipalities from './atlas-search-municipalities.vue'
 import atlasMapLegend from './atlas-map-legend.vue'
 
-// Candidates and coordinates data are not included in the component's data object
-//  because we don't want them to be reactive 
+// statesBordersLayer data is not included in the component's data object
+//  because we don't want it to be reactive 
+var statesBordersLayer = null	
+
 
 export default {
 
@@ -178,11 +181,9 @@ export default {
 				'TO': [ -9.318047360830361, -48.21937224834929 ]
 			},
 
-			stateBoundaries: {"AL":[[-10.50117582170068,-38.237589446023804],[-8.813116324640603,-35.151950709597564]],"AM":[[-9.818061377887272,-73.80156832950942],[2.2466255437806737,-56.09753828307561]],"AP":[[-1.236184960729986,-54.87624215511599],[4.436728303888998,-49.87668107315433]],"BA":[[-18.347255447192623,-46.61710686569986],[-8.532807210106945,-37.34113542049852]],"CE":[[-7.857575606490638,-41.423290748337514],[-2.7844996521176384,-37.253309747822016]],"DF":[[-16.050296450045842,-48.285523719028504],[-15.500262345312745,-47.308378445650824]],"ES":[[-21.301798586613188,-41.879623009555395],[-17.8919628898678,-38.84078432468759]],"GO":[[-19.4991647389655,-53.25081246908195],[-12.395750122340338,-45.906960668176254]],"MA":[[-10.26176381868467,-48.75513142896972],[-1.0449675500081526,-41.795906404340876]],"MG":[[-22.922736870113766,-51.046094580082936],[-14.233349439377164,-39.85683295357111]],"MS":[[-24.068597447874012,-58.16850828391636],[-17.166780615695586,-50.92291286539836]],"MT":[[-18.041580757767292,-61.63340040070763],[-7.349015341893303,-50.22482294273574]],"PA":[[-9.841163563019379,-58.8983418815875],[2.591012002886835,-46.06093781153198]],"PB":[[-8.302956077627027,-38.76558203759521],[-6.025907931582328,-34.79288142984251]],"PE":[[-9.48253335801251,-41.358358451520644],[-3.8289759782339416,-32.390973457255676]],"PI":[[-10.928761366451525,-45.99428964039032],[-2.7393099048490903,-40.370511540906804]],"PR":[[-26.717114682216902,-54.61931255227314],[-22.516653528078784,-48.0235368023863]],"RJ":[[-23.368936844438963,-44.88931172981614],[-20.76322889572094,-40.9585145792582]],"RN":[[-6.982736440457561,-38.582118948605675],[-4.831540569836928,-34.96853277519552]],"RO":[[-13.693687077566501,-66.81023839317209],[-7.969301207898109,-59.77434087897784]],"RR":[[-1.5806494677588887,-64.82524272692058],[5.2718410772455755,-58.88687261636393]],"RS":[[-33.75208127059592,-57.64376682264455],[-27.082300912734233,-49.69145695525251]],"SC":[[-29.35384668022551,-53.836873860171096],[-25.955835243775773,-48.355106938357295]],"SE":[[-11.568559213142233,-38.24503995296037],[-9.515040317835222,-36.393882484042095]],"SP":[[-25.312330120754744,-53.110110774449566],[-19.779903117074248,-44.16214225280717]],"TO":[[-13.46769931726239,-50.7420687424835],[-5.168395404398332,-45.69667575421508]]},
+			stateBoundaries: {"AC":[[-7.066020,-74.057653],[-11.413279,-66.444127]],"AL":[[-10.50117582170068,-38.237589446023804],[-8.813116324640603,-35.151950709597564]],"AM":[[-9.818061377887272,-73.80156832950942],[2.2466255437806737,-56.09753828307561]],"AP":[[-1.236184960729986,-54.87624215511599],[4.436728303888998,-49.87668107315433]],"BA":[[-18.347255447192623,-46.61710686569986],[-8.532807210106945,-37.34113542049852]],"CE":[[-7.857575606490638,-41.423290748337514],[-2.7844996521176384,-37.253309747822016]],"DF":[[-16.050296450045842,-48.285523719028504],[-15.500262345312745,-47.308378445650824]],"ES":[[-21.301798586613188,-41.879623009555395],[-17.8919628898678,-38.84078432468759]],"GO":[[-19.4991647389655,-53.25081246908195],[-12.395750122340338,-45.906960668176254]],"MA":[[-10.26176381868467,-48.75513142896972],[-1.0449675500081526,-41.795906404340876]],"MG":[[-22.922736870113766,-51.046094580082936],[-14.233349439377164,-39.85683295357111]],"MS":[[-24.068597447874012,-58.16850828391636],[-17.166780615695586,-50.92291286539836]],"MT":[[-18.041580757767292,-61.63340040070763],[-7.349015341893303,-50.22482294273574]],"PA":[[-9.841163563019379,-58.8983418815875],[2.591012002886835,-46.06093781153198]],"PB":[[-8.302956077627027,-38.76558203759521],[-6.025907931582328,-34.79288142984251]],"PE":[[-7.033393,-42.194031],[-9.371123,-32.599109]],"PI":[[-10.928761366451525,-45.99428964039032],[-2.7393099048490903,-40.370511540906804]],"PR":[[-26.717114682216902,-54.61931255227314],[-22.516653528078784,-48.0235368023863]],"RJ":[[-23.368936844438963,-44.88931172981614],[-20.76322889572094,-40.9585145792582]],"RN":[[-6.982736440457561,-38.582118948605675],[-4.831540569836928,-34.96853277519552]],"RO":[[-13.693687077566501,-66.81023839317209],[-7.969301207898109,-59.77434087897784]],"RR":[[-1.5806494677588887,-64.82524272692058],[5.2718410772455755,-58.88687261636393]],"RS":[[-33.75208127059592,-57.64376682264455],[-27.082300912734233,-49.69145695525251]],"SC":[[-29.35384668022551,-53.836873860171096],[-25.955835243775773,-48.355106938357295]],"SE":[[-11.568559213142233,-38.24503995296037],[-9.515040317835222,-36.393882484042095]],"SP":[[-25.312330120754744,-53.110110774449566],[-19.779903117074248,-44.16214225280717]],"TO":[[-13.46769931726239,-50.7420687424835],[-5.168395404398332,-45.69667575421508]]},
 
 			brazilBoundaries: [],
-
-			statesBordersLayer: null,
 
 			topoLayer: null,
 
@@ -206,6 +207,9 @@ export default {
 			}, {
 				name: 'hbar',
 				icon: 'format_align_left'
+			}, {
+				name: 'empty',
+				icon: 'not_interested'
 			}],
 			chartType: 'winner',
 
@@ -214,14 +218,16 @@ export default {
 				label: 'LQ',
 				// These colors came straigh from ColorBrewer
 				// palette and domain will be used to create a chroma color function
-				palette: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
-				domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0],
+				//palette: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
+				palette: ["#b35806","#e08214","#fdb863","#fee0b6","#f7f7f7","#d8daeb","#b2abd2","#8073ac","#542788"],
+				//domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0],
+				domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0],
 				legendTitle: 'Quociente de locação',
-				legendLabels: ['Até 0,1', '0,1 \u2014 0,25', '0,25 \u2014 0,5', '0,5 \u2014 1,0', '1,0 \u2014 2.0', '2.0 \u2014 4.0', '4.0 \u2014 8.0', '8,0 ou mais']
+				legendLabels: ['Até 0,1', '0,1 \u2014 0,25', '0,25 \u2014 0,5', '0,5 \u2014 1,0', '1,0 \u2014 2.0', '2.0 \u2014 4.0', '4.0 \u2014 8.0', '8,0 ou mais', '16.0 ou mais']
 			}, {
 				name: 'indicePareto',
 				label: 'IP',
-				 palette: ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'],
+				palette: ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'],
 				domain: [1, 0.8, 0.6, 0.4, 0.2],
 				legendTitle: 'Índice de importância',
 				legendPalette: ['#b30000', '#e34a33', '#fc8d59', '#fdcc8a', '#fef0d9'],
@@ -246,25 +252,49 @@ export default {
 				icon: 'layers'
 			}],
 			dataLayers: [{
-				name: 'IDH em 2000',
-				id: 'idh2000'
+/*				name: 'IDH em 2000',
+				id: 'idh2000',
 			}, {
 				name: 'IDH em 2010',
 				id: 'idh2010',
 				selected: true
 
-			}, {
+			}, { 
+*/				
 				name: 'Renda per capita 2010',
-				id: 'rendaPC2010'
+				id: 'pibPerCapita2010',
+				chromaScale: ['#fff', '#000'],
+				chromaDomain: [ 5000, 50000],
+				legend: ['Até R$ 5 mil', 'De R$ 5 mil até R$ 25 mil', 'De R$ 25 mil até R$ 50 mil', 'Mais de R$ 50 mil']
 			}, {
-				name: 'Renda per capita 2012',
-				id: 'rendaPC2012'
+				name: 'Renda per capita 2014',
+				id: 'pibPerCapita2014',
+				chromaScale: ['#fff', '#000'],
+				chromaDomain: [ 5000, 50000],
+				legend: ['Até R$ 5 mil', 'De R$ 5 mil até R$ 25 mil', 'De R$ 25 mil até R$ 50 mil', 'Mais de R$ 50 mil']
 			}, {
-				name: 'Densidade demográfica',
-				id: 'densidade'
+//				name: 'Densidade demográfica',
+//				id: 'densidade'
+//			}, {
+				name: 'Índice Gini 2000',
+				id: 'gini2000',
+				chromaScale: ['#252525', '#f7f7f7'],
+				chromaDomain: [0.3, 0.7],
+				legend: ['Até 0,3', 'De 0,3 a 0,4', 'De 0,4 a 0,5', 'De 0,5 a 0,6', 'De 0,6 a 0,7', '0,7 ou mais']
 			}, {
-				name: null,
-				id: 0,
+				name: 'Indice Gini 2010',
+				id: 'gini2010',
+				chromaScale: ['#ccece6', '#005824'],
+				chromaDomain: [0.3, 0.7],
+				legend: ['Até 0,3', 'De 0,3 a 0,4', 'De 0,4 a 0,5', 'De 0,5 a 0,6', 'De 0,6 a 0,7', '0,7 ou mais']
+			}, {
+				name: ''
+			}, {
+				name: 'Mostrar apenas municípios',
+				id: 'map',
+				chromaScale: ['white', 'black'],
+				chromaDomain: [0, 1],
+				legend: null
 			}, {
 				name: 'Esconder camada de dados',
 				id: 'nolayer'
@@ -300,15 +330,16 @@ export default {
 
 		uf () {
 			if (this.uf) {
-				this.flyToState(this.uf.sigla)
 				this.highlightStateBorder(this.uf)
+				this.flyToState(this.uf.sigla)
+				this.loadIbgeData(this.uf)
 				//if (this.uf.sigla == 'SP')
 				//	this.drawMunicipalities()	// Just a test
 			}
 			else {
 				Charts.removeCharts()
 				this.fitBoundsToBrazil()
-				this.loadStatesBorders
+				this.loadStatesBorders()
 			}
 		},
 
@@ -339,15 +370,14 @@ export default {
 
 
 	mounted () {
-		var resizeEventHandler = null
+
 		window.addEventListener('resize', () => {
-			if (!resizeEventHandler) {
-				resizeEventHandler = setTimeout(() => {
-					resizeEventHandler = null
-					this.mapHeight = this.calcMapHeight()
-				}, 50)
-			}
+			this.map.invalidateSize()
+			this.mapHeight = this.calcMapHeight()
 		})
+
+		// Events for viewing district data on the side panel
+		// Event listeneres will be added below
 
 		var that = this
 		var onHover = function (e) {
@@ -396,6 +426,9 @@ export default {
 			zoomDelta: 0.25,
 			zoomSnap: 0.25
 		})
+
+		// Three different tileLayes -- maybe we could take a decision over here...
+
 		var greenTileLayer = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
 			maxZoom: 18,
 			attribution: 'Mapa &copy; <a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
@@ -416,7 +449,6 @@ export default {
 
 		greenTileLayer.addTo(this.map);
 
-
 		this.fitBoundsToBrazil();
 
 		this.map.addEventListener('mouseover', onHover.bind(this))		
@@ -425,24 +457,22 @@ export default {
 
 		Charts.setUpCanvasLayer(this.map)
 
-// Code by Ryan Clark (https://blog.webkid.io/maps-with-leaflet-and-topojson/)
+		// Code below by Ryan Clark (https://blog.webkid.io/maps-with-leaflet-and-topojson/)
+		L.TopoJSON = L.GeoJSON.extend({  
+		    addData: function (jsonData) {    
+			    if (jsonData.type === 'Topology') {
+			        for (var key in jsonData.objects) {
+				        var geojson = topojson.feature(jsonData, jsonData.objects[key]);
+				        L.GeoJSON.prototype.addData.call(this, geojson);
+	 		        }
+			    }    
+			    else {
+			        L.GeoJSON.prototype.addData.call(this, jsonData);
+			    }
+			}  
+		});
 
-L.TopoJSON = L.GeoJSON.extend({  
-  addData: function(jsonData) {    
-    if (jsonData.type === 'Topology') {
-      for (var key in jsonData.objects) {
-        var geojson = topojson.feature(jsonData, jsonData.objects[key]);
-        L.GeoJSON.prototype.addData.call(this, geojson);
-      }
-    }    
-    else {
-      L.GeoJSON.prototype.addData.call(this, jsonData);
-    }
-  }  
-});
-
-	console.log('Para encerrar o mount() de atlas-map, vamos carregar o mapa dos estados brasileiros')
-	setTimeout(() => this.loadStatesBorders(), 2000)
+		setTimeout(() => this.loadStatesBorders(), 1000)
 
     },
 
@@ -490,6 +520,7 @@ L.TopoJSON = L.GeoJSON.extend({
 
 			// Limitamos o zoom a no máximo 9 por causa do Distrito Federal
 			zoom = Math.min(zoom, 9)  
+			this.map.invalidateSize()
 			this.map.flyTo(center, zoom)
 
 		},	
@@ -514,11 +545,10 @@ L.TopoJSON = L.GeoJSON.extend({
 			    topoLayer.addData(topoData);
 			    topoLayer.addTo(that.map);
 			    topoLayer.eachLayer(handleStateLayer);
-			    that.statesBordersLayer = topoLayer
+			    statesBordersLayer = topoLayer
 			}
 
 			function handleStateLayer (layer) {
-			    console.log(layer) 
 			    var fillColor = '#ff0000' 
 			    if (layer.feature.properties.cod != 3550308)
 			        fillColor = 'rgba(255,255,255,0.4)'   
@@ -566,8 +596,8 @@ L.TopoJSON = L.GeoJSON.extend({
 				that.$emit('set-uf', uf)
 			}
 
-			if (this.statesBordersLayer) {
-				this.statesBordersLayer.eachLayer(handleStateLayer);
+			if (statesBordersLayer) {
+				statesBordersLayer.eachLayer(handleStateLayer);
 				return
 			}
 
@@ -584,10 +614,7 @@ L.TopoJSON = L.GeoJSON.extend({
 				nome = uf.nome.toUpperCase()
 
 			function handleStateLayer(layer) {
-			    console.log(layer.feature.id) 
- 			  
   			    if (layer.feature.id == codIbge) {
-  			    	console.log('encontrou o state border que tem que ser highlighted')	
 	  			  	layer.setStyle({
 				  	    fillOpacity: 0,
 				  		weight: 1,
@@ -605,8 +632,8 @@ L.TopoJSON = L.GeoJSON.extend({
 				layer.off('click')
 			}
 
-			if (this.statesBordersLayer) {
-				this.statesBordersLayer.eachLayer(handleStateLayer);
+			if (statesBordersLayer) {
+				statesBordersLayer.eachLayer(handleStateLayer);
 			}	
 		},
 
@@ -655,8 +682,31 @@ L.TopoJSON = L.GeoJSON.extend({
 				this.map.removeLayer(this.topoLayer)
 		},
 
+		loadIbgeData (uf) {
+			var that = this
+			setTimeout(() => {
+				DataLayers.carregarMapaMunicipiosUf(uf)
+				.then((response) => {
+					return DataLayers.carregarDadosIbge(uf)
+				})
+				.then((response) => {
+					DataLayers.mostrarLayer(that.map, 'gini2010', chroma.scale(['#fff', '#000']).domain([0.2, 0.7]))
+				})
+			}, 500)	
+		},
 
+		showDataLayer (dataLayer) {
+			if (dataLayer.id == 'nolayer') {
+				return DataLayers.removerLayer(this.map)
+			}
+			console.log(dataLayer)
 
+			DataLayers.mostrarLayer(
+				this.map, 
+				dataLayer.id, 
+				chroma.scale(dataLayer.chromaScale).domain(dataLayer.chromaDomain)
+			)
+		},
 
 		// THE METHOD BELOW IS NOT CURRENTLY IN USE
 		drawMunicipalities () {
@@ -778,13 +828,13 @@ L.TopoJSON = L.GeoJSON.extend({
 	.map-control-radius-type {
 		position: absolute;
 		right: 12px;
-		top:288px;
+		top:256px;
 	}
 
 	.map-control-data-layers {
 		position: absolute;
 		right:12px;
-		top:96px;
+		top:342px;
 	}
 
 	.selected-chart {

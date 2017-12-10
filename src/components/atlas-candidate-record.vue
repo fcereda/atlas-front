@@ -21,13 +21,13 @@
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top" v-if="!disabled">
 				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="disableCandidato">
-					<v-icon color="grey lighten-1">visibility_off</v-icon>
+					<v-icon color="grey lighten-1">visibility</v-icon>
 				</span>
 				<span>Ignorar este candidato temporariamente</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top" v-if="disabled">
 				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="enableCandidato">
-					<v-icon color="grey lighten-1">visibility</v-icon>
+					<v-icon color="grey lighten-1">visibility_off</v-icon>
 				</span>
 				<span>Voltar a ver os dados deste candidato</span>
 			</v-tooltip>	
@@ -60,7 +60,7 @@
 				<span style="flex:1"></span>
 				<v-btn v-if="false" color="blue-grey darken-1" @click="snackbar.display=true">Ver carreira</v-btn>
 				<v-btn v-show="!indicesIndividuais" color="primary" :disabled="disabled" @click="verIndicesIndividuais">Ver índices individuais</v-btn>
-				<v-btn v-show="indicesIndividuais" color="primary" :disabled="disabled" @click="esconderIndicesIndividuais">Voltar a comparações</v-btn>				
+				<v-btn v-show="indicesIndividuais" color="primary" :disabled="disabled" @click="esconderIndicesIndividuais">Voltar a gráficos comparativos</v-btn>				
 			</div>
 		</div>	
 	</div>

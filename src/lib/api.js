@@ -307,6 +307,11 @@ export default {
 		return axios.get(topoFileAddress)
 	},
 
+	getStatesBordersMap () {
+		var topoFileAddress = '/public/maps/topo/br-states.min.json'
+		return axios.get(topoFileAddress)
+	},
+
 	getParties () {
 		return axios.get('/api/partidos')
 	}

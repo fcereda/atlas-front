@@ -7,6 +7,7 @@
       fixed
       v-model="drawer"
       width="400"
+      class="pb-0"
       app
     >
 
@@ -69,6 +70,7 @@
             :show-indexes="showIndexes"
             style="z-index:0;"
             @click="onMapClick"
+            @set-uf="changeUf"
           ></atlas-map>
 
     </v-content>

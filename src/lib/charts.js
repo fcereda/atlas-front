@@ -269,7 +269,9 @@ export default {
             ctx.closePath()
         }
 
+        var drawEmptyChart = function () {
 
+        }
 
         const functionsByChartType = {
             'bar'   : drawBarChart,
@@ -280,6 +282,7 @@ export default {
             'pill'  : drawPillChart,
             'hbar'  : drawHorizontalBarChart,
             'index' : drawIndexChart,
+            'empty' : drawEmptyChart
         }       
 
         function drawChart (params) {

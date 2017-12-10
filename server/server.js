@@ -7,18 +7,25 @@ var bodyParser = require('body-parser')
 const fs = require('fs')
 var parse = require('csv-parse')
 var proxy = require('express-http-proxy')
+var path = require('path');
 
 var arqCandidatos = './data/candidatos.csv',
 	arqCoords = './data/coords.csv',
 	arqPartidos = './data/partidos.json',
+	arqMunicipios = './data/municipios.csv',
 	port = 8008,
 	verbose = false,
 	debugMode = false,
+	developmentMode = false,
+	distFolder = __dirname + '/dist/',
+	publicFolder = __dirname + '/public/',
  	candidatos = [],
  	candidatosPorUf = {},
 	coordsArray = [],
 	coordenadas = {},
 	coordenadasPorUf = {},
+	municipios = [],
+	municipiosPorUf = {},
 	partidos = []
 
 router.use(function (req, res, next) {
@@ -37,7 +44,9 @@ function getOptions () {
 	  { name: 'port', alias: 'p', type: Number, multiple: false, defaultOption: 8000, help: 'A porta à qual o servidor vai responder. Default é 8000' },
 	  { name: 'candidatos', alias: 'a', type: String, defaultOption: './data/candidatos.csv', help: 'Nome do arquivo de candidatos. Default é ./data/candidatos.csv' },
 	  { name: 'coords', alias: 'c', type: String, defaultOption: './data/coords.csv', help: 'Nome do arquivo de coordenadas. Default é ./data/coords.csv' },
-	  { name: 'partidos', alias: 't', type: String, defaultOption: './data/partidos.json', help: 'Nome do arquivo de partidos políticos. Default é ./data/partidos.json'}
+	  { name: 'partidos', alias: 't', type: String, defaultOption: './data/partidos.json', help: 'Nome do arquivo de partidos políticos. Default é ./data/partidos.json'},
+	  { name: 'municipios', alias: 'm', type: String, defaultOption: './data/municipios.json', help: 'Nome do arquivo de dados do IBGE dos municípios. Default é ./data/municipios.csv'},
+	  { name: 'dev', type: Boolean, help: 'True durante o desenvolvimento' }
 	]
 
 	var options = commandLineArgs(optionDefinitions, {partial: true})
@@ -77,7 +86,23 @@ function filterCandidates (arrayCandidatos, uf, ano, cargo, nome, partido) {
 }
 
 
-//app.use('/cepesp', proxy('http://cepesp.io/'))
+if (!developmentMode) {
+	app.get('/', function (req, res) {
+	    res.sendFile(path.join(distFolder + 'index.html'))
+	});
+
+	app.get('/dist/build.js', function (req, res) {
+		res.sendFile(path.join(distFolder + 'build.js'))
+	})
+
+	app.use('/public', express.static(publicFolder));
+
+	app.use('/cepesp', proxy('http://cepesp.io/'))
+}
+else {
+	console.log('Operando em modo de desenvolvimento')
+}
+
 
 router.route('/api/candidatos')
 	.get(function (req, res) {
@@ -121,13 +146,29 @@ router.route('/api/coordenadas')
 		if (id)
 			return res.json(coordenadas[id])
 		if (uf) {
-			//print('uf = ' + uf)
-			//print(coordenadasPorUf[uf.toUpperCase()])
 			return res.json(coordenadasPorUf[uf.toUpperCase()])
 		}
 		return res.status(400).json({ error: 'Please specify ID or UF' })
 	})
 	
+router.route('/api/municipios')	
+	.get(function (req, res) {
+		var { id, uf } = req.query
+		if (uf) {
+			uf = uf.toUpperCase()
+			if (!municipiosPorUf[uf])
+				return res.status(400).json({ error: 'UF ' + uf + ' does not exist'})
+			return res.json(municipiosPorUf[uf])
+		}	
+		else {
+			var ufs = []
+			for (var uf in municipiosPorUf)
+				ufs.push(uf)
+			return res.json(ufs)
+		}
+		return res.status(400).json({ error: 'Please specify ID or UF' })
+	})
+
 
 
 function parseCandidateRow (row) {
@@ -161,7 +202,7 @@ function parseCandidateRow (row) {
 
 function parseCoordinateRow (row) {
 	var id = row[0],
-		uf = row[1],
+	uf = row[1],
 		municipio = row[2],
 		zona = row[3],
 		lat = row[4],
@@ -183,11 +224,12 @@ var options = getOptions()
 port = options.port || port
 arqCandidatos = options.candidatos || arqCandidatos
 arqCoords = options.coords || arqCoords
+arqMunicipios = options.municipios || arqMunicipios
 verbose = options.verbose || verbose
 debugMode = options.debug || debugMode
+developmentMode = options.dev || developmentMode
 
 print('Servidor do CEPESP Atlas Eleitoral')
-
 print('Carregando candidatos...')
 try {
 	var fileData = fs.readFileSync(arqCandidatos)
@@ -271,6 +313,46 @@ try {
     		Object.entries(coordenadasPorUf).forEach(([uf, coords]) => print(uf + ': ' + coords.length + ' coordenadas carregadas'))
     	// We assume this will be the last line to be executed when all data files are loaded
     	print('Servidor do CEPESP Atlas Eleitoral operando na porta ' + port)
+	})
+}
+catch (error) {
+	console.error('Erro tentando abrir o arquivo ' + fileName)
+	console.error(error)
+	process.exit()
+}
+
+
+function parseIbgeData (row) {
+	var newObj = {}
+	for (var key in row) {
+		if (key == 'id' || key == 'uf' || key == 'nome')
+			newObj[key] = row[key]
+		else
+			newObj[key] = parseFloat(row[key])
+	}
+	return newObj
+}
+
+print('Carregando dados IBGE dos municípios...')
+try {
+	var fileData = fs.readFileSync(arqMunicipios)
+	parse(fileData, {delimiter: ';', trim: true, columns: true}, function (err, rows) {
+    	if (err) {
+    		console.error(`Error trying to parse file ${arqMunicipios}`)
+    		console.error(err)
+    		process.exit()
+    	}
+ 		print(rows.length + ' municípios carregados')
+    	municipios = rows.map(parseIbgeData)
+
+    	municipiosPorUf = {}
+    	municipios.forEach((municipio) => {
+    		let uf = municipio.uf.toUpperCase()
+    		console.log(uf)
+    		if (!municipiosPorUf[uf])
+    			municipiosPorUf[uf] = []
+    		municipiosPorUf[uf].push(municipio)
+		})    		
 	})
 }
 catch (error) {

@@ -48,41 +48,45 @@ export default {
 
 	data () {
 
+		const colorScales = [{
+			type: 'categorical',
+			baseColor: 'usable'
+		}, {
+			type: 'categorical',
+			baseColor: 'teal'
+		}, {
+			type: 'categorical',
+			baseColor: 'set1'
+		}, {
+			type: 'categorical',
+			baseColor: 'paired'
+		}, {
+			type: 'categorical',
+			baseColor: 'dark2'
+		}, {
+			divider: true
+		}, {
+			type: 'linear',
+			baseColor: '#f57f17',
+		}, { 
+			type: 'linear',
+			baseColor: '#1a237e',
+		}, {
+			type: 'linear',
+			baseColor: '#b71c1c',
+		}]
+
 		return { 
 
-			menuItems: [{
-				colors: (new Color.ColorSequence('categorical', 'usable')).getColorsFromSequence(0, 7),
-				type: 'categorical',
-				baseColor: 'usable',
-				selected: true,
-			}, { 
-				colors: (new Color.ColorSequence('categorical', 'hot')).getColorsFromSequence(0, 7),
-				type: 'categorical',
-				baseColor: 'hot',
-				selected: false
-			}, {
-				colors: (new Color.ColorSequence('categorical', 'teal')).getColorsFromSequence(0, 7),
-				type: 'categorical',
-				baseColor: 'teal',
-				selected: false,
-			}, {
-				divider: true
-			}, {
-				colors: (new Color.ColorSequence('linear', '#f57f17', 7)).getColorsFromSequence(0, 7),
-				type: 'linear',
-				baseColor: '#f57f17',
-				selected: false,
-			}, {
-				colors: (new Color.ColorSequence('linear', '#1a237e', 7)).getColorsFromSequence(0, 7),
-				type: 'linear',
-				baseColor: '#1a237e',
-				selected: false
-			}, {
-				colors: (new Color.ColorSequence('linear', '#b71c1c', 7)).getColorsFromSequence(0, 7),
-				type: 'linear',
-				baseColor: '#b71c1c',
-				selected: false
-			}]
+			menuItems: colorScales.map(({type, baseColor, divider}) => {
+				if (divider) 
+					return { divider: true }
+				return {
+					type,
+					baseColor,
+					colors: (new Color.ColorSequence(type, baseColor)).getColorsFromSequence(0, 7)
+				}		
+			})	
 
 		}
 

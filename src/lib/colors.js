@@ -31,11 +31,50 @@ const colorCircle = [
 ]
 ]
 
+const brewerScales = {
+	'set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'],
+	'paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
+	'dark2': ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
+}
+
 function hexToRgb (hex) {
 	var value = parseInt(hex, 16)
 	return Math.floor(value / 256 / 256) + ',' + Math.floor(value / 256) % 256 + ',' + value % 256;
 }
 
+var categoricalScales = (function () {
+	const categoricalScales = {},
+		circleScales = {
+			hot: [1, 3, 5, 7, 9, 10, 0, 2, 4, 6, 8, 11],
+			teal: [9, 7, 5, 3, 1, 11, 8, 6, 4, 2, 0, 10],
+			usable: [7, 2, 10, 4, 0, 6, 1, 8, 3, 11]
+		}  	
+
+	for (var scaleName in circleScales) {			
+		let colors = [],
+			scale = circleScales[scaleName];
+		
+		[0, 1].forEach((circle) => {
+			scale.forEach((index) => {
+				var color = colorCircle[circle][index]
+				colors.push(`${color[0]}, ${color[1]}, ${color[2]}`)
+			})
+		})
+		categoricalScales[scaleName] = colors
+	}
+
+	for (var scaleName in brewerScales) {
+		let colors = [],
+			scale = brewerScales[scaleName]
+		scale.forEach((color) => {
+			let colorNumber = color.replace('#', '')
+			//console.log(color.replace('#', ''), hexToRgb(colorNumber))
+			colors.push(hexToRgb(colorNumber))
+		})	
+		categoricalScales[scaleName] = colors
+	}
+	return categoricalScales
+})()
 	
 export default {
 
@@ -49,9 +88,10 @@ export default {
 
 
 		var colors = [],
-			scale = scales[baseColor + 'Scale'];
+			scale;
 
 		if (type == 'categorical') {
+/*
 			[0, 1].forEach((circle) => {
 				scale.forEach((index) => {
 					var color = colorCircle[circle][index]
@@ -61,6 +101,14 @@ export default {
 					})
 				})
 			})		
+*/
+			scale = categoricalScales[baseColor]
+			scale.forEach((color) => {
+				colors.push({
+					rgbColor: color,
+					inUse: 0
+				})
+			})
 		}
 		else {
 			scale = chroma.scale([baseColor, 'white']).padding([0, 0.4]).colors(numColors)
@@ -68,7 +116,7 @@ export default {
 				var color = hexToRgb(scale[i].replace('#', '0x'))
 				colors.push({
 					rgbColor: color,
-					inUse: false
+					inUse: 0
 				})
 			}	
 		}	
@@ -78,12 +126,18 @@ export default {
 		this.baseColor = baseColor
 
 		this.getNextColor = function () {
-			for (var i=0; i<this.colors.length; i++) {
-				if (!this.colors[i].inUse) {
-					this.colors[i].inUse = true
-					return this.colors[i].rgbColor
+			var numUsers = 0
+			// this while clause is just to make sure the look will 
+			// eventually end -- we don't want numUsers to get this big!
+			while (numUsers < 100) {
+				for (var i=0; i<this.colors.length; i++) {
+					if (this.colors[i].inUse <= numUsers) {
+						this.colors[i].inUse = numUsers + 1
+						return this.colors[i].rgbColor
+					}
 				}
-			}
+				numUsers += 1
+			}	
 		}
 
 		this.getColorsFromSequence = function (start = 0, size) {
@@ -101,7 +155,7 @@ export default {
 		this.returnColor = function (color) {
 			for (var i=0; i<this.colors.length; i++) {
 				if (this.colors[i].color == color || this.colors[i].rgbColor == color) {
-					this.colors[i].inUse = false
+					this.colors[i].inUse -= 1
 					return color
 				}
 			}

@@ -64,11 +64,6 @@ export default {
 
 	data () {
 
-		console.log(chroma
-				.scale(this.palette)
-				.colors(this.labels.length)
-)
-
 		return {
 
 			collapsed: false
@@ -83,7 +78,7 @@ export default {
 			return chroma
 				.scale(this.palette)
 				.colors(this.labels.length)
-		}		
+		},
 
 	},
 
