@@ -120,6 +120,7 @@
 <script>
 
 import api from '../lib/api.js'
+import utils from '../lib/utils.js'
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
 import axios from 'axios'
@@ -181,6 +182,8 @@ export default {
 
 			brazilBoundaries: [],
 
+			statesBordersLayer: null,
+
 			topoLayer: null,
 
 			chartCanvas: null,
@@ -223,7 +226,7 @@ export default {
 				legendTitle: 'Índice de importância',
 				legendPalette: ['#b30000', '#e34a33', '#fc8d59', '#fdcc8a', '#fef0d9'],
 				legendDomain: [0.2, 0.4, 0.6, 0.8, 1.0],
-				legendLabels: ['Primeiros 20%', '20% \u2014 40%', '40% \u2014 60%', '60% \u2014 80%', 'Até 100%'],
+				legendLabels: ['20% mais importantes', '20% \u2014 40%', '40% \u2014 60%', '60% \u2014 80%', '80% \u2014 100%'],
 			}],
 			indexChartType: 'indicePareto',	
 
@@ -298,14 +301,14 @@ export default {
 		uf () {
 			if (this.uf) {
 				this.flyToState(this.uf.sigla)
-				this.drawStateBorders()
+				this.highlightStateBorder(this.uf)
 				//if (this.uf.sigla == 'SP')
 				//	this.drawMunicipalities()	// Just a test
 			}
 			else {
 				Charts.removeCharts()
-				this.removeStateBorders()
 				this.fitBoundsToBrazil()
+				this.loadStatesBorders
 			}
 		},
 
@@ -414,7 +417,6 @@ export default {
 		greenTileLayer.addTo(this.map);
 
 
-		
 		this.fitBoundsToBrazil();
 
 		this.map.addEventListener('mouseover', onHover.bind(this))		
@@ -438,6 +440,9 @@ L.TopoJSON = L.GeoJSON.extend({
     }
   }  
 });
+
+	console.log('Para encerrar o mount() de atlas-map, vamos carregar o mapa dos estados brasileiros')
+	setTimeout(() => this.loadStatesBorders(), 2000)
 
     },
 
@@ -483,9 +488,7 @@ L.TopoJSON = L.GeoJSON.extend({
 				zoom = 7
 			}					
 
-			// Keeps zoom level up to 9; 
-			// we do this because Distrito Federal is very small, so calling getBoundsZoom()
-			// against its boundaries will produce too much zoom
+			// Limitamos o zoom a no máximo 9 por causa do Distrito Federal
 			zoom = Math.min(zoom, 9)  
 			this.map.flyTo(center, zoom)
 
@@ -500,6 +503,111 @@ L.TopoJSON = L.GeoJSON.extend({
 	        this.$nextTick(() => {
 	          that.showLayersMenu = true
 	        })  
+		},
+
+		loadStatesBorders () {
+			var that = this
+
+			function addTopoData (topoData) { 
+				const topoLayer = new L.TopoJSON();
+				console.log('Carregou o TopoJSON dos estados brasileiros!')
+			    topoLayer.addData(topoData);
+			    topoLayer.addTo(that.map);
+			    topoLayer.eachLayer(handleStateLayer);
+			    that.statesBordersLayer = topoLayer
+			}
+
+			function handleStateLayer (layer) {
+			    console.log(layer) 
+			    var fillColor = '#ff0000' 
+			    if (layer.feature.properties.cod != 3550308)
+			        fillColor = 'rgba(255,255,255,0.4)'   
+			  
+				layer.setStyle({
+				    fillColor: '#444',
+				    fillOpacity: 0,
+				    color: '#555',
+				    weight: 1,
+				    opacity: 0.2
+				});
+
+				layer.on({
+				    mouseover: enterLayer,
+				    mouseout: leaveLayer,
+				    click: clickLayer
+				});
+			}
+
+			function enterLayer () {
+				const countryName = this.feature.properties.name;
+
+				this.bringToFront();
+				this.setStyle({
+				    weight:1,
+				    opacity: 1,
+				    fillOpacity: 0.05,
+				});
+			}
+
+			function leaveLayer () {
+				this.bringToBack();
+				this.setStyle({
+				    weight:1,
+				    opacity:.2,
+				    fillOpacity: 0
+				});
+			}
+
+			function clickLayer (e) {
+				var codIbge = e.target.feature.id,
+					uf = utils.obterUfPorCodIbge(codIbge)
+
+				console.log('Vamos para ' + e.target.feature.properties.name + ' (' + uf.sigla + ')')
+				that.$emit('set-uf', uf)
+			}
+
+			if (this.statesBordersLayer) {
+				this.statesBordersLayer.eachLayer(handleStateLayer);
+				return
+			}
+
+			api.getStatesBordersMap()
+			.then((response) => addTopoData(response.data))
+			.catch((error) => {
+				console.error('Error trying to load shapes of the Brazilian states')
+				console.error(error)
+			})		
+		},
+
+		highlightStateBorder (uf) {
+			var codIbge = uf.codIbge,
+				nome = uf.nome.toUpperCase()
+
+			function handleStateLayer(layer) {
+			    console.log(layer.feature.id) 
+ 			  
+  			    if (layer.feature.id == codIbge) {
+  			    	console.log('encontrou o state border que tem que ser highlighted')	
+	  			  	layer.setStyle({
+				  	    fillOpacity: 0,
+				  		weight: 1,
+				  		opacity: 0.4
+				  	})
+				}
+				else {
+					layer.setStyle({
+				  	  	fillOpacity: 0,
+				  		opacity: 0
+				 	})
+				}
+				layer.off('mouseover')
+				layer.off('mouseout')
+				layer.off('click')
+			}
+
+			if (this.statesBordersLayer) {
+				this.statesBordersLayer.eachLayer(handleStateLayer);
+			}	
 		},
 
 		drawStateBorders () {
@@ -546,6 +654,8 @@ L.TopoJSON = L.GeoJSON.extend({
 			if (this.topoLayer)
 				this.map.removeLayer(this.topoLayer)
 		},
+
+
 
 
 		// THE METHOD BELOW IS NOT CURRENTLY IN USE
