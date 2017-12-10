@@ -302,5 +302,13 @@ export default {
 
 	},	
 
+	getStateBordersMap (uf) {
+		var topoFileAddress = `/public/maps/state/${uf.toLowerCase()}-state.json`
+		return axios.get(topoFileAddress)
+	},
+
+	getParties () {
+		return axios.get('/api/partidos')
+	}
 
 }

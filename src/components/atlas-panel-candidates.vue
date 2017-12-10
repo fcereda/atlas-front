@@ -4,7 +4,7 @@
 	<v-container fluid>
 
 	    <div v-if="!candidatosSelecionados.length">
-	    	Agora, escolha um ou mais candidatos ou partidos que tenham disputado eleições {{ uf.sigla == 'DF' ? 'no Distrito Federal': 'neste estado' }}:
+	    	Agora, escolha um ou mais candidatos ou partidos que tenham disputado eleições {{ uf.sigla == 'DF' ? 'no Distrito Federal': 'neste estado' }}, e clique em <b>Adicionar</b>. Para mais opções, clique em <b>Busca avançada</b>:
 	    </div>	
 
 		<atlas-candidate-chip
@@ -34,7 +34,8 @@
 
 		<atlas-select-candidate
 			:uf="uf"
-			@add-candidate="addCandidate">
+			@add-candidate="addCandidate"
+            @add-multiple-candidates="addMultipleCandidates">
 		</atlas-select-candidate>
 
 	</v-container>
@@ -62,6 +63,7 @@ import AtlasCandidateChip from './atlas-candidate-record.vue'
 import api from '../lib/api.js'
 import Store from '../lib/store.js'
 import Colors from '../lib/colors.js'
+import Charts from '../lib/charts.js'
 
 var currentColorIndex = 0
 
@@ -82,12 +84,12 @@ export default {
 		AtlasCandidateChip
 	},
 
-	props: [ 'uf' ],
+	props: [ 'uf', 'colorScale' ],
 
     data: () => ({
 
     	candidatosSelecionados: [],
-    	colorSequence: new Colors.ColorSequence('categorical'),
+    	colorSequence: new Colors.ColorSequence('categorical', 'usable'),
     	showBuscaAvancada: false,
     	snackbar: {
     		text: 'Erro tentando carregar dados',
@@ -96,12 +98,38 @@ export default {
 
     }),
 
+    watch: {
+
+        colorScale: function () {
+            this.setColorScale(this.colorScale)
+        }
+
+    },
+
     methods: {
 
     	setUF (uf) {
     		this.uf = uf
     		this.$emit('change-uf', uf.sigla)
     	},
+
+        setColorScale (colorScale) {
+            var numColors
+            colorScale = colorScale || this.colorScale
+            if (colorScale.type == 'linear')
+                numColors = Math.max(this.candidatosSelecionados.length, 3)
+            this.colorSequence = new Colors.ColorSequence(colorScale.type, colorScale.baseColor, numColors)
+            if (this.candidatosSelecionados && this.candidatosSelecionados.length) {
+                this.candidatosSelecionados.forEach((candidato) => {
+                    candidato.color = this.colorSequence.getNextColor()
+                    console.error(Store.obterCandidato(candidato))
+                    Store.obterCandidato(candidato).color = candidato.color
+                })
+                // Como mudamos as cores, repintamos os gráficos
+                Charts.calcPlottingData()
+                Charts.redrawCharts()   
+            }
+        },
 
     	addCandidate: function (candidate) {
 
@@ -110,10 +138,8 @@ export default {
     			totalVotos = {},
     			totalGeral = 0
 
-    		console.log('candidateObj:')
-    		console.log(candidateObj)
     		this.candidatosSelecionados.push(candidateObj)
-    		api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
+    		return api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
     			console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
     			console.log(`${data.length} rows carregados`)
@@ -133,14 +159,18 @@ export default {
     			// Agora vamos converter esse array em um dicionário	
     			
     			var votes = {},
+                    votesArray = [],
     				totalCandidato = 0
     			data.forEach(({ codigoMunicipio, codigoZona, votos }) => {
-    				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
-    				votes[id] = {
-    					id,
-    					numero: votos,
-    					total: totalVotos[id]
-    				}
+    				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona),
+                        votesObj = {
+                            id,
+                            numero: votos,
+                            total: totalVotos[id],
+                            porcentagem: votos / totalVotos[id]
+                        }
+    				votes[id] = votesObj
+                    votesArray.push(votesObj)
     				totalCandidato += votos	
     				if (!totalVotos[id]) {
     					console.error('No voting total for local ' + id)
@@ -148,28 +178,48 @@ export default {
     			})
 
     			// Vamos agora calcular o índice LQ (location quotient) de cada zona-município
-    			// O LQ é calculado como: (votos do candidato no distrito / total de votos do candidato) / (total de votos do distrito / total geral de votos)
+    			// O LQ de um distrito é definido como: 
+                // (votos do candidato no distrito / total de votos do candidato) / (total de votos do distrito / total geral de votos)
 
-    			console.log('total de votos = ' + totalGeral)
-    			
     			var indices = {},
-    				somaIndiceLQ = 0,
-    				somaIndiceG = 0
+    				somaIndiceLQ = 0
     			for (var id in votes) {
 					let votosCandidatoZona = votes[id].numero,
 						totalVotosZona = totalVotos[id],
-						indiceLQ = (votosCandidatoZona / totalCandidato) / (totalVotosZona / totalGeral),
-						indiceG  = (votosCandidatoZona / totalCandidato) - (totalVotosZona / totalGeral)
+						indiceLQ = (votosCandidatoZona / totalCandidato) / (totalVotosZona / totalGeral)
 
 					indices[id]	= {
 						id, 
 						indiceLQ,
-						indiceG
+                        indicePareto: 1    // inicializamos o índice de Pareto com o valor menos significativo (1)
 					}
 
 					somaIndiceLQ += indiceLQ
-					somaIndiceG += (indiceG ^ 2)
     			}
+
+                // Vamos agora calcular o "Índice de Pareto
+                // O objetivo é determinar quais distritos são responsáveis por 20% dos votos, por 40%
+                // por 60% e por 80% dos votos
+                // Para isso, ordenamos os distritos por votos (do mais votado ao menos votado) e 
+                // calculamos o acumulado das porcentagens 
+
+                // Sabemos que indices{} contém um dictionary com as zonas/municipios, então o objetivo
+                // final é popular essa zona com um campo IP que indicará a porcentagem acumulada 
+                // daquela zona/municipio
+                // votesArray já contém os votos por id (zona/município)
+                // totalCandidato contém a votação total do candidato
+
+                votesArray.sort((a, b) => b.numero - a.numero)
+                    .reduce((acumulado, distrito) => {
+                    var porcentagem = distrito.numero / totalCandidato    
+                    acumulado += porcentagem
+                    distrito.acumulado = acumulado
+                    return acumulado
+                }, 0)
+                votesArray.forEach(({ id, acumulado }) => {
+                    indices[id].indicePareto = acumulado
+                })
+
 /*
     			var minLQ = 1000,
     				maxLQ = -1000,
@@ -190,24 +240,52 @@ export default {
     			candidateObj.color = this.colorSequence.getNextColor()
     			candidateObj.total = totalCandidato
     			candidateObj.somaIndiceLQ = somaIndiceLQ
-    			candidateObj.somaIndiceG = somaIndiceG
-    			this.$emit('add-candidate', {...candidateObj, votos: votes, indices})
+                this.$emit('add-candidate', {...candidateObj, votos: votes, indices})
+                // Se a escala de cores for linear, refazemos o esquema de cores para refletir a mudança no número de candidastos
+                if (this.colorScale.type == 'linear')
+                    this.setColorScale()    
+                // Retorna uma Promise para permitir que this.addMultipleCandidates comece 
+                // a carregar o próximo candidato somente depois que o candidato atual
+                // tenha sido carregado
+                return new Promise((resolve, reject) => resolve())
     		})
     		.catch((error) => {
     			console.error(`Error trying to load candidate data`)
     			console.error(error)
     			this.snackbar.visible = true
     			this.removeCandidate(candidateObj)
+                return new Promise((resolve, reject) => reject())
     		})
 
     	},
+
+        addMultipleCandidates (candidates) {
+            var that = this  // Hack to keep context for addNextCandidate()
+
+            function addNextCandidate(index) {
+                if (index >= candidates.length)
+                    return
+                return that.addCandidate(candidates[index])
+                .then(() => {
+                    addNextCandidate(index+1)
+                })
+                .catch((error) => {
+                    addNextCandidate(index+1)
+                })
+            }
+
+            addNextCandidate(0)
+        },
 
     	removeCandidate (candidato) {
     		var indexToRemove = this.candidatosSelecionados.indexOf(candidato);
     		if (indexToRemove >= 0) {
     			if (this.candidatosSelecionados.splice(indexToRemove, 1)) {
-    				this.colorSequence.returnColor(candidato.color)
-    				this.$emit('remove-candidate', candidato)
+                    this.$emit('remove-candidate', candidato)
+    				if (this.colorScale.type == 'categorical')
+                        this.colorSequence.returnColor(candidato.color)
+                    else 
+                        this.setColorScale()
     			}
     		}
     		else {
@@ -227,8 +305,6 @@ export default {
     	},
 
     	disableCandidate (candidato) {
-    		console.log('disabling candidate')
-    		console.log(candidato)
     		Store.desabilitarCandidato(candidato)
     		candidato.disabled = true
     	},
@@ -262,6 +338,22 @@ export default {
 
 .delete-button:hover {
 	color: rgb(239, 83, 80);
+}
+
+
+::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+    background: #444;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #666;  
+    -webkit-border-radius: 1ex;
+}
+
+::-webkit-scrollbar-corner {
+    background: #444;
 }
 
 </style>

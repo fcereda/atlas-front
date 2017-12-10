@@ -6,7 +6,7 @@
       clipped
       fixed
       v-model="drawer"
-      width="440"
+      width="400"
       app
     >
 
@@ -40,17 +40,19 @@
       <div v-if="!modoInicial">
         <atlas-display-uf
           :uf="uf"
+          @set-color-scale="setColorScale"
         ></atlas-display-uf> 
       </div>  
 
-      <atlas-select-candidates
+      <atlas-panel-candidates
         v-if="!modoInicial"
         v-show="!mostrarPainelZonas"
         :uf="uf"
+        :colorScale="colorScale"
         @add-candidate="addCandidate"
         @remove-candidate="removeCandidate"
         @show-indexes="showIndividualIndexes"
-      ></atlas-select-candidates>
+      ></atlas-panel-candidates>
 
       <atlas-painel-zonas
         v-show="!modoInicial && mostrarPainelZonas"
@@ -64,9 +66,8 @@
 
           <atlas-map 
             :uf="uf"
-            :indexes="individualIndexes"
+            :show-indexes="showIndexes"
             style="z-index:0;"
-            @hover="onMapHover"
             @click="onMapClick"
           ></atlas-map>
 
@@ -91,7 +92,7 @@
 
   import Store from './lib/store.js'
   import api from './lib/api.js'
-  import atlasSelectCandidates from './components/atlas-select-candidates.vue'
+  import atlasPanelCandidates from './components/atlas-panel-candidates.vue'
   import atlasMap from './components/atlas-map-leaflet-canvas.vue'
   import atlasSelectUf from './components/atlas-select-uf.vue'
   import atlasDisplayUf from './components/atlas-display-uf.vue'
@@ -100,7 +101,7 @@
   export default {
 
     components: {
-      'atlas-select-candidates': atlasSelectCandidates,
+      'atlas-panel-candidates': atlasPanelCandidates,
       'atlas-map': atlasMap,
       'atlas-select-uf': atlasSelectUf,
       'atlas-display-uf': atlasDisplayUf,
@@ -111,9 +112,13 @@
       drawer: true,
       modoInicial: true,
       uf: '',
-//      locationCoords: null,
+      colorScale: {
+        type: 'categorical',
+        baseColor: 'usable'
+      },
       candidates: [],
-      individualIndexes: null,
+      showIndexes: false,
+      highlightedCandidate: null,
       zonasHover: [],
       mostrarPainelZonas: false,
       snackbar: {
@@ -146,8 +151,6 @@
         .then((data) => {
           Store.coordenadas = data.coords
           Store.municipios = data.municipios
-          console.error('*** vamos ver o conteúdo do array municipios')
-          console.log(Store.municipiosArr)
         })
         .catch((error) => {
           this.snackbar.visible = true
@@ -167,16 +170,14 @@
       },
 
       showIndividualIndexes (candidate) {
-        this.individualIndexes = candidate
+        this.showIndexes = candidate
       },
 
-      onMapHover () {
-        // NOTHING HERE
+      setColorScale (colorScale) {
+        this.colorScale = colorScale
       },
 
       onMapClick (zonas) {
-        console.error('clicou no mapa')
-        console.log(zonas)
         if (!zonas || !zonas.length) {
           zonas = []
           this.mostrarPainelZonas = false

@@ -1,6 +1,4 @@
-import chroma from 'chroma-js'
-
-const colorCircle = [
+colorCircle = [
 [	
 	[254, 241, 101],	// yellow
 	[241, 199, 91],
@@ -29,69 +27,72 @@ const colorCircle = [
 	[71, 119, 67],
 	[139, 164, 72]
 ]
-]
-
-function hexToRgb (hex) {
-	var value = parseInt(hex, 16)
-	return Math.floor(value / 256 / 256) + ',' + Math.floor(value / 256) % 256 + ',' + value % 256;
-}
-
+];
 	
 export default {
 
-	ColorSequence (type = 'categorical', baseColor='usable', numColors = 10) {
+	ColorSequence (type = 'categorical', color) {
 
 		const scales = {
 		    hotScale: [1, 3, 5, 7, 9, 10, 0, 2, 4, 6, 8, 11],
 		    tealScale: [9, 7, 5, 3, 1, 11, 8, 6, 4, 2, 0, 10],
-		    usableScale: [7, 2, 10, 4, 0, 6, 1, 8, 3, 11]
+		    usableScale: [7, 2, 10, 4, 0, 6, 1, 8, 3, 11]]
 		}  
 
 
-		var colors = [],
-			scale = scales[baseColor + 'Scale'];
-
 		if (type == 'categorical') {
-			[0, 1].forEach((circle) => {
-				scale.forEach((index) => {
-					var color = colorCircle[circle][index]
-					colors.push({
-						rgbColor: `${color[0]}, ${color[1]}, ${color[2]}`,
-						inUse: false
-					})
+			this.colors = hotScale.map(([red, green, blue]) => {
+				return {
+					rgbColor: `${red}, ${green}, ${blue}`,
+					inUse: false
+				}
+			}		
+		}
+
+/*
+		const hueSequence = [5, 4, 6, 3, 7, 2, 8, 1, 9]
+		var colors = []	
+		if (type == 'categorical') {
+			var colorSequence = color == 'reversed' ? reversedColorSequence : mainColorSequence
+			colors = []
+			hueSequence.forEach((hue) => {
+				colorSequence.forEach((color) => {
+					colors.push(materialColors[color][hue])
 				})
-			})		
+			})
 		}
 		else {
-			scale = chroma.scale([baseColor, 'white']).padding([0, 0.4]).colors(numColors)
-			for (var i=0; i<numColors; i++) {
-				var color = hexToRgb(scale[i].replace('#', '0x'))
-				colors.push({
-					rgbColor: color,
-					inUse: false
-				})
-			}	
-		}	
+			color = color || 'blue'
+			if (!materialColors[color])
+				color = 'blue'
 
+			colorPosition = mainColorSequence.indexOf(color)
+			for (var i=colorPosition; i<mainColorSequence.length; i++)
+				colors.push(materialColors[mainColorSequence[i]])
+			for (i=0; i<colorPosition; i++)
+				colors.push(materialColors[mainColorSequence[i]])
+			colors = colors.join()
+		}
+	
+		colors = colors.map((color) => {
+			return {
+				color,
+				rgbColor: hexToRgb(color),
+				inUse: false
+			}
+		})
+*/
 		this.colors = colors
 		this.type = type
-		this.baseColor = baseColor
+		this.color = color		
 
 		this.getNextColor = function () {
 			for (var i=0; i<this.colors.length; i++) {
 				if (!this.colors[i].inUse) {
 					this.colors[i].inUse = true
-					return this.colors[i].rgbColor
+					return hexToRgb(colors[i].color)
 				}
 			}
-		}
-
-		this.getColorsFromSequence = function (start = 0, size) {
-			var colors = []
-			size = size || this.colors.length
-			for (var i = 0; i < size; i++)
-				colors.push(this.colors[start+i].rgbColor)
-			return colors
 		}	
 
 		this.getLinearColorSequence = function () {

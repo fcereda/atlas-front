@@ -70,7 +70,7 @@
 	    		    color="primary"
 	    		    :disabled="addCandidateButtonIsDisabled"
 	    		    @click="addCandidate"
-	    		>Adicionar candidato&nbsp;&nbsp;<v-icon>add</v-icon>
+	    		>&nbsp; Adicionar &nbsp;&nbsp;<v-icon>add</v-icon>
 	    		</v-btn>
 	    	</span>
 	    </v-flex>		
@@ -129,24 +129,7 @@ export default {
 	  		value: 'de'
 	  	}],
 
-	  	candidatos: [
-	  		{ 
-	  			nome: 'Paulo Salim Maluf',
-	  			partido: 'PP',
-	  			ano: 2006
-	  		}, {
-	  			nome: 'Paulo Silveira',
-	  			partido: 'PSD',
-	  			ano: 2010
-	  		}, {
-	  			nome: 'Paulo César Caju',
-	  			partido: 'PPS',
-	  			ano: 2012
-	  		}, {
-	  			nome: 'José Sarney',
-	  			partido: 'PMDB',
-	  			ano: 2012
-	  		}],
+	  	candidatos: [],
 
 	  	ano: null,
 	  	cargo: null,
@@ -215,8 +198,30 @@ export default {
 		},
 
 		addMultipleCandidates (candidatosSelecionados) {
-			candidatosSelecionados.forEach((candidato) => console.log(candidato))
-			candidatosSelecionados.forEach((candidato) => this.adicionarCandidato(candidato))
+
+			var candidatos = candidatosSelecionados.map((candidato) => {
+				var { nome, cargo, ano, partido, numero, classificacao, votacao } = candidato
+				return {
+					nome: Utils.capitalizeName(nome), 
+					ano: parseInt(ano), 
+					cargo, 
+					partido,
+					numero,
+					classificacao,
+					votacao
+				}
+			})
+			this.$emit('add-multiple-candidates', candidatos)
+			console.log("CHEGOU ATÉ AQUI!!")
+			return
+
+			//candidatosSelecionados.forEach((candidato) => console.log(candidato))
+			// Vamos acrescentar um de cada vez, em intervalos de 50 ms
+			candidatosSelecionados.forEach((candidato, index) => {
+				setTimeout(() => {
+					this.adicionarCandidato(candidato)
+				}, 50*index)
+			})	
 		},
 
 		queryCandidates (val) {

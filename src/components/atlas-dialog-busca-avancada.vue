@@ -5,7 +5,7 @@
         <v-card-title>
           <span class="headline">Busca avançada de candidatos</span>
         </v-card-title>
-        <v-card-text>
+        <v-card-text class="pt-0 pb-0">
           <v-container grid-list-md>
             <v-layout wrap>
               <v-flex xs12 sm6 md3>
@@ -34,7 +34,6 @@
                       v-bind:items="partidos"
                       v-model="partidoSelecionado"
                       max-height="400"
-                      hint="Múltiplas escolhas"
                       autocomplete
                       clearable
                       @keydown.native="selectOnKey"
@@ -42,9 +41,10 @@
                       @keypress.native="selectOnKey"
                   ></v-select>
               </v-flex>
-              <v-flex xs12 sm12 md12>
+              <v-flex xs12 sm12 md12 class="pt-0">
                 <v-text-field label="Nome" v-model="nomeSelecionado" required hint="Basta digitar parte do nome"></v-text-field>
               </v-flex>
+
 <!--
               <v-flex xs12 sm6 md6>
                 <v-text-field label="Limitar aos votados em" hint="Escolha um município"></v-text-field>
@@ -100,6 +100,7 @@
 <script>
 
 import axios from 'axios'
+import api from '../lib/api.js'
 import Utils from '../lib/utils.js'
 
 
@@ -117,7 +118,8 @@ export default {
         cargos: Utils.obterCargos(),
         cargoSelecionado: null,
 
-        partidos: [ 'PMDB', 'PT', 'PSDB', 'PP', 'PSD', 'PPB', 'DEM', 'PFL', 'Rede', 'Patriotas'],
+        todosPartidos: [],
+        partidos: [],
         partidoSelecionado: null,
 
         nomeSelecionado: null,
@@ -143,7 +145,24 @@ export default {
     watch: {
       show () {
         this.dialog = true
+      },
+
+      anoSelecionado () {
+        console.log('mudou anoSelecionado para ' + this.anoSelecionado)
+        this.partidos = this.obterPartidosDoAno(this.anoSelecionado)
+        console.log(this.todosPartidos)
+        console.log(this.partidos)
+
       }
+    },
+
+    mounted () {
+      api.getParties()
+      .then((response) => {
+        this.todosPartidos = response.data
+        this.partidos = this.obterPartidosDoAno()
+      })  
+      .catch((error) => console.error(error))
     },
 
     methods: {
@@ -166,6 +185,16 @@ export default {
               e.stopPropagation()
               return false
           }  
+      },
+
+      obterPartidosDoAno (ano) {
+        var semFiltro = function () { return true },
+            filtrarPorAno = (partido) => partido.anos.indexOf(ano) >= 0,
+            funcaoFiltro = this.anoSelecionado ? filtrarPorAno : semFiltro
+
+        return this.todosPartidos
+          .filter(funcaoFiltro).map((partido) => partido.sigla)
+          .sort((a, b) => a > b ? 1 : -1)
       },
 
       procurarCandidatos () {
@@ -231,6 +260,7 @@ export default {
 
       adicionarCandidatosSelecionados () {
         this.$emit('add-candidates', this.candidatosSelecionados)
+        //this.$emit('add-multiple-candidates', this.candidatosSelecionados)
         this.candidatosSelecionados = []
         this.closeDialog()
       }

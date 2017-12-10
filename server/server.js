@@ -6,16 +6,20 @@ var router = express.Router()
 var bodyParser = require('body-parser')
 const fs = require('fs')
 var parse = require('csv-parse')
+var proxy = require('express-http-proxy')
 
 var arqCandidatos = './data/candidatos.csv',
 	arqCoords = './data/coords.csv',
+	arqPartidos = './data/partidos.json',
 	port = 8008,
 	verbose = false,
 	debugMode = false,
  	candidatos = [],
+ 	candidatosPorUf = {},
 	coordsArray = [],
 	coordenadas = {},
-	coordenadasPorUf = {}
+	coordenadasPorUf = {},
+	partidos = []
 
 router.use(function (req, res, next) {
 	if (debugMode) {
@@ -32,7 +36,8 @@ function getOptions () {
 	  { name: 'debug', alias: 'd', type: Boolean, help: 'Modo de depuração'},
 	  { name: 'port', alias: 'p', type: Number, multiple: false, defaultOption: 8000, help: 'A porta à qual o servidor vai responder. Default é 8000' },
 	  { name: 'candidatos', alias: 'a', type: String, defaultOption: './data/candidatos.csv', help: 'Nome do arquivo de candidatos. Default é ./data/candidatos.csv' },
-	  { name: 'coords', alias: 'c', type: String, defaultOption: './data/coords.csv', help: 'Nome do arquivo de coordenadas. Default é ./data/coords.csv' }
+	  { name: 'coords', alias: 'c', type: String, defaultOption: './data/coords.csv', help: 'Nome do arquivo de coordenadas. Default é ./data/coords.csv' },
+	  { name: 'partidos', alias: 't', type: String, defaultOption: './data/partidos.json', help: 'Nome do arquivo de partidos políticos. Default é ./data/partidos.json'}
 	]
 
 	var options = commandLineArgs(optionDefinitions, {partial: true})
@@ -55,8 +60,8 @@ function verboseprint () {
 }
 
 
-function filterCandidates (uf, ano, cargo, nome, partido) {
-	return candidatos.filter((candidato) => {
+function filterCandidates (arrayCandidatos, uf, ano, cargo, nome, partido) {
+	return arrayCandidatos.filter((candidato) => {
 		if (uf && candidato.uf != uf)
 			return false
 		if (ano && candidato.ano != ano)
@@ -71,16 +76,43 @@ function filterCandidates (uf, ano, cargo, nome, partido) {
 	})
 }
 
+
+//app.use('/cepesp', proxy('http://cepesp.io/'))
+
 router.route('/api/candidatos')
 	.get(function (req, res) {
 		var { uf, ano, cargo, nome, partido } = req.query
 		//if (cargo == 'pr1' || cargo == 'pr2')
 		//	uf = null
+		var arrayAFiltrar = []
 		if (uf)
 			uf = uf.toUpperCase()
+		try {
+			if (uf && ano && cargo)
+				arrayAFiltrar = candidatosPorUf[uf][ano][cargo]
+			else if (uf && ano)
+				arrayAFiltrar = candidatosPorUf[uf][ano]
+			else if (uf && cargo)
+				arrayAFiltrar = candidatosPorUf[uf][cargo]
+			else if (uf)
+				arrayAFiltrar = candidatosPorUf[uf]
+			else
+				arrayAFiltrar = candidatos
+		}
+		catch (err) {
+			if (debugMode) {
+				print(err)
+			}
+			arrayAFiltrar = []
+		}	
 		if (nome)
 			nome = nome.toUpperCase()
-		return res.json(filterCandidates(uf, ano, cargo, nome, partido))
+		return res.json(filterCandidates(candidatos, uf, ano, cargo, nome, partido))
+	})
+
+router.route('/api/partidos')
+	.get(function (req, res) {
+		res.json(partidos)
 	})
 
 router.route('/api/coordenadas')
@@ -89,8 +121,8 @@ router.route('/api/coordenadas')
 		if (id)
 			return res.json(coordenadas[id])
 		if (uf) {
-			print('uf = ' + uf)
-			print(coordenadasPorUf[uf.toUpperCase()])
+			//print('uf = ' + uf)
+			//print(coordenadasPorUf[uf.toUpperCase()])
 			return res.json(coordenadasPorUf[uf.toUpperCase()])
 		}
 		return res.status(400).json({ error: 'Please specify ID or UF' })
@@ -100,7 +132,7 @@ router.route('/api/coordenadas')
 
 function parseCandidateRow (row) {
 
-	const cargos = ['pr', 'vpr', 'g', 'vg', 's', 'df', 'de', 'de', '1s', '2s']
+	const cargos = ['pr', 'vpr', 'g', 'vg', 's', 'df', 'de', 'de', '1s', '2s', 'pm', 'vpm', 'vm']
 
 	var nome = row['NOME_CANDIDATO'],
 		uf = row['UF'] || row['SIGLA_UF'],
@@ -156,7 +188,7 @@ debugMode = options.debug || debugMode
 
 print('Servidor do CEPESP Atlas Eleitoral')
 
-print('Loading candidates...')
+print('Carregando candidatos...')
 try {
 	var fileData = fs.readFileSync(arqCandidatos)
     parse(fileData, {delimiter: ',', trim: true, columns: true}, function (err, rows) {
@@ -167,14 +199,52 @@ try {
     	}
  		print(rows.length + ' candidatos carregados')
     	candidatos = rows.map((row) => parseCandidateRow(row))
+
+    	candidatos.forEach((candidato) => {
+    		var {uf, ano, cargo} = candidato
+    		if (!candidatosPorUf[uf])
+    			candidatosPorUf[uf] = {}
+    		if (!candidatosPorUf[uf][cargo])
+    			candidatosPorUf[uf][cargo] = []
+    		if (!candidatosPorUf[uf][ano])
+    			candidatosPorUf[uf][ano] = {}		// Note que a propriedade ano é uma string
+    		if (!candidatosPorUf[uf][ano][cargo])
+    			candidatosPorUf[uf][ano][cargo] = []
+    		candidatosPorUf[uf][ano][cargo].push(candidato)
+    		candidatosPorUf[uf][cargo].push(candidato) 
+    	})	
+
+    	var sumarioCandidato = ({ numero,nome,votacao }) => numero + ' ' + nome + ', ' + votacao + ' votos'
+
+    	if (debugMode) {
+	    	print('todos os candidatos a presidente:')
+	    	console.log(candidatosPorUf['SP']['pr1']
+	    		.sort((a, b) => (a.ano * 100 + a.numero) - (b.ano * 100 + b.numero))
+	    		.map(sumarioCandidato))
+	    	console.log('candidatos a governador em 2014')
+	    	console.log(candidatosPorUf['SP'][2014]['g1']
+	    		.map(sumarioCandidato))
+	    }	
+
   	})
 }  	
 catch (error) {
-	console.error('Error trying to open file ' + fileName)
+	console.error('Erro tentando abrir o arquivo ' + arqCandidatos)
+	console.error(error)
 	process.exit()
 }
 
-print('Loading coordinates...')
+print('Carregando partidos políticos...')
+try {
+	var partidos = JSON.parse(fs.readFileSync(arqPartidos, 'utf8'));
+}
+catch (error) {
+	console.error('Erro tentando abrir o arquivo ' + arqPartidos)
+	console.error(error)
+	process.exit()
+}
+
+print('Carregando coordenadas...')
 try {
 	var fileData = fs.readFileSync(arqCoords)
 	parse(fileData, {delimiter: ',', trim: true, from: 2}, function (err, rows) {
@@ -204,7 +274,8 @@ try {
 	})
 }
 catch (error) {
-	console.error('Error trying to open file ' + fileName)
+	console.error('Erro tentando abrir o arquivo ' + fileName)
+	console.error(error)
 	process.exit()
 }
 

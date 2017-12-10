@@ -5,19 +5,21 @@
 			{{ uf.nome }}
 		</span>
 			<v-menu offset-y z-index="10000">
-	            <v-tooltip bottom open-delay="200" slot="activator" >
+	            <v-tooltip bottom open-delay="200" slot="activator" z-index="10000">
 	              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
 	                <v-icon>format_color_fill</v-icon>
 	              </v-btn>
-	              <span>Esquema de cores</span>
+	              <span>Escalas de cor</span>
 	            </v-tooltip>  
 	            <v-list>
-	            	<v-subheader v-text="'Escalas'"></v-subheader>
+	            	<v-subheader v-text="'Escalas de cor'"></v-subheader>
 				    <template v-for="item in menuItems">
-				    	<v-list-tile v-if="item.title || item.colors" :key="item.title" @click="">
+				    	<v-list-tile v-if="item.title || item.colors" :key="item.title" @click="setColorScale(item)">
+							<i class="material-icons" :style="item.selected ? 'color:#aaa;' : 'color:transparent;'">done</i>
+							&nbsp;
 	          				<v-list-tile-title v-if="item.title">{{ item.title }}</v-list-tile-title>
 	          				<template v-for="color in item.colors">
-	          					<v-icon :color="color">save</v-icon>
+	          					<span :style="'color:rgb(' + color + ');'"><i class="material-icons">fiber_manual_record</i></span>
 	          				</template>	
 	          			</v-list-tile>	
 	          			<v-divider v-else-if="item.divider"></v-divider>
@@ -25,7 +27,7 @@
 	      		</v-list>
     		</v-menu>
             <v-tooltip bottom open-delay="200" z-index="10000">
-              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
+              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator" v-if="false">
                 <v-icon>more_vert</v-icon>
               </v-btn>
               <span>Mais opções</span>
@@ -38,6 +40,8 @@
 
 <script>
 
+import Color from '../lib/colors.js'
+
 export default {
 
 	props: [ 'uf' ],
@@ -46,24 +50,61 @@ export default {
 
 		return { 
 
-			menuItems: [{ 
-				title: 'Escala colorida 1'
+			menuItems: [{
+				colors: (new Color.ColorSequence('categorical', 'usable')).getColorsFromSequence(0, 7),
+				type: 'categorical',
+				baseColor: 'usable',
+				selected: true,
+			}, { 
+				colors: (new Color.ColorSequence('categorical', 'hot')).getColorsFromSequence(0, 7),
+				type: 'categorical',
+				baseColor: 'hot',
+				selected: false
 			}, {
-				title: 'Escala colorida 2'
-			}, {
-				colors: [ 'red lighten-2', 'red lighten-4', 'red darken 1']
+				colors: (new Color.ColorSequence('categorical', 'teal')).getColorsFromSequence(0, 7),
+				type: 'categorical',
+				baseColor: 'teal',
+				selected: false,
 			}, {
 				divider: true
 			}, {
-				title: 'Escala tons de azul'
+				colors: (new Color.ColorSequence('linear', '#f57f17', 7)).getColorsFromSequence(0, 7),
+				type: 'linear',
+				baseColor: '#f57f17',
+				selected: false,
 			}, {
-				title: 'Escala tons de verde'
+				colors: (new Color.ColorSequence('linear', '#1a237e', 7)).getColorsFromSequence(0, 7),
+				type: 'linear',
+				baseColor: '#1a237e',
+				selected: false
 			}, {
-				title: 'Escala tons de vermelho' 
+				colors: (new Color.ColorSequence('linear', '#b71c1c', 7)).getColorsFromSequence(0, 7),
+				type: 'linear',
+				baseColor: '#b71c1c',
+				selected: false
 			}]
 
 		}
 
+	},
+
+	mounted () {
+		var colorSeq = new Color.ColorSequence(`categorical`)
+	},
+
+	methods: {
+		setColorScale (colorScale) {
+			console.log('colorScale')
+			console.log(colorScale)
+			this.menuItems.forEach((item) => {
+				item.selected = false
+			})
+			colorScale.selected = true
+			this.$emit('set-color-scale', {
+				type: colorScale.type,
+				baseColor: colorScale.baseColor,
+			})
+		}
 	}
 
 

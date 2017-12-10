@@ -29,7 +29,7 @@
 				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="enableCandidato">
 					<v-icon color="grey lighten-1">visibility</v-icon>
 				</span>
-				<span>Voltar a usar os dados deste candidato</span>
+				<span>Voltar a ver os dados deste candidato</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top">
 				<div class="pointer" v-if="!loading" slot="activator">
@@ -182,7 +182,6 @@ export default {
 			else {
 				style += this.color + ')'
 			}
-			console.error(`style= ${style}`)
 			return style
 		},
 
@@ -191,8 +190,9 @@ export default {
 		},
 
 		labelCargo () {
-
-			return Utils.obterNomeCargo(this.cargo)
+			// o segundo argumento indica que queremos a versão curta do cargo
+			// p.ex, "Presidente T1" em lugar de "Presidente 1o. turno"
+			return Utils.obterNomeCargo(this.cargo, true)  
 
 		},
 
@@ -219,7 +219,6 @@ export default {
 
 	methods: {
 		openDetails () {
-			console.log('entrou em openDetails')
 			this.$emit('open')
 		},
 
@@ -255,8 +254,8 @@ export default {
 		},
 
 		showsnack () {
-			console.log(this)
-			this.$root.$snackbar('Hello World!', 'error')
+			// ISTO NÃO FUNCIONA, REMOVER NA REVISÃO
+			//this.$root.$snackbar('Hello World!', 'error')
 		}
 
 	}
