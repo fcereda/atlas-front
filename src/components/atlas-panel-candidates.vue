@@ -32,20 +32,6 @@
 
 	    <p></p>
 
-        <v-select 
-            v-if="true"
-            label="Procurar candidato" 
-            editable 
-            item-value="id" 
-            item-text="label"
-            style="z-index:10000;" 
-            z-index="10000"
-
-            cache-items              
-            :items="items"
-            :search-input.sync="search"
-        ></v-select>
- 
 		<atlas-select-candidate
 			:uf="uf"
 			@add-candidate="addCandidate"
@@ -71,7 +57,7 @@
 
 <script>
 
-import AtlasSelectCandidate from './atlas-select-candidate.vue'
+import AtlasSelectCandidate from './atlas-select-candidate-simple.vue'
 import AtlasSelectUf from './atlas-select-uf.vue'
 import AtlasCandidateChip from './atlas-candidate-record.vue'
 import api from '../lib/api.js'
@@ -105,8 +91,6 @@ export default {
     data: () => ({
 
     	candidatosSelecionados: [],
-        search: '',
-        items: [],
 
     	colorSequence: new Colors.ColorSequence('categorical', 'usable'),
     	showBuscaAvancada: false,
@@ -128,35 +112,9 @@ export default {
             this.setColorScale(this.colorScale)
         },
 
-        search (val) {
-            val && this.querySelectionsCandidates(val)
-        }
-
     },
 
     methods: {
-
-        querySelectionsCandidates (v) {
-            v = v || ''
-            if (v.length < 3)
-                return;
-            console.log('entrou em querySelectionsCandidate')
-            console.log(v)
-            axios.get(`/api/candidatos?uf=${this.uf.sigla}&nome=${v.toUpperCase()}`)
-            .then((response) => {
-                console.log('axios respondeu')
-                console.log(response)
-                this.items = response.data.sort((a, b) => b.votacao - a.votacao).map((candidato) => ({
-                    id: candidato.id,
-                    label: `${candidato.nome} (${candidato.partido}) \u2014 ${candidato.cargo} ${candidato.ano} ${candidato.classificacao}o.`,
-                }))                   
-            })
-            .catch((error) => {
-                console.error('error trying to fetch candidates')
-                console.error(error)
-            })
-        },    
-
 
     	setUF (uf) {
     		this.uf = uf

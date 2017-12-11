@@ -7,6 +7,7 @@ const CARGOS_CURTO = {
 	'df' : 'D Federal',
 	'de' : 'D Estadual',
 	'dd' : 'D Distrital',
+	'pm' : 'Prefeito',
 	'pm1': 'Prefeito T1',
 	'pm2': 'Prefeito T2',
 	'v'	 : 'Vereador'
@@ -21,6 +22,7 @@ const CARGOS = {
 	'df' : 'Deputado Federal',
 	'de' : 'Deputado Estadual',
 	'dd' : 'Deputado Distrital',
+	'pm' : 'Prefeito',	
 	'pm1': 'Prefeito 1º turno',
 	'pm2': 'Prefeito 2º turno',
 	'v'	 : 'Vereador'
