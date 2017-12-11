@@ -1,13 +1,13 @@
 <template>
-  <v-app id="inspire" dark>
+  <v-app id="inspire" >
     <v-navigation-drawer
-      dark
+      
       permanent
       clipped
       fixed
       v-model="drawer"
       width="400"
-      class="pb-0"
+      class="light-bar pb-0"
       app
     >
 
@@ -17,13 +17,13 @@
         <span v-if="!modoInicial" style="flex:1"></span>
         <span v-if="!modoInicial">
             <v-tooltip bottom open-delay="200" >
-              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator" @click="goHome">
+              <v-btn flat icon _color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator" @click="goHome">
                 <v-icon>home</v-icon>
               </v-btn>
               <span>Voltar à tela inicial</span>
             </v-tooltip>  
             <v-tooltip bottom open-delay="200" z-index="10000">
-              <v-btn flat icon color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
+              <v-btn flat icon _color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
                 <v-icon>save</v-icon>
               </v-btn>
               <span>Salvar o mapa atual</span>
@@ -207,11 +207,17 @@ html {
   overflow-y: hidden;
 }
 
+light-bar {
+  color: #222;
+}
+
 .cepesp-logo {
     transition: all 0.4s ease;  
     font-weight:700;
     padding:16px;
     color:#eee;
+    color:#222;
+    color:#1a237e;
     display:flex;
 }
 
@@ -230,6 +236,7 @@ html {
 .button-logo-pequeno {
     margin:0;
     margin-top:-4px;
+    color:#222;
 }
 
 .atlas-toolbar {

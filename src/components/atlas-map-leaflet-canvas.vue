@@ -16,7 +16,7 @@
 				@click="changeChartType(chart.name)" 
 				v-bind:class="chartType==chart.name?'selected-chart':''"
 			>
-				<v-icon class="pa-1" :color="chartType==chart.name?'blue lighten-2':'grey lighten-2'">{{ chart.icon }}</v-icon>
+				<v-icon class="pa-1" :color="chartType==chart.name?'blue darken-2':'grey darken-2'">{{ chart.icon }}</v-icon>
 			</div>
 			<div 
 				v-for="chart in indexChartTypes"
@@ -34,7 +34,7 @@
     			@click="changeRadiusType(radius.name)"
     			v-bind:class="radiusType == radius.name?'selected-chart':''"
     		>
-    			<v-icon class="pa-1" :color="radiusType==radius.name?'blue lighten-2':'grey lighten-2'">{{ radius.icon }}</v-icon>
+    			<v-icon class="pa-1" :color="radiusType==radius.name?'blue darken-2':'grey darken-2'">{{ radius.icon }}</v-icon>
     		</div>	
 
     	</div>
@@ -53,7 +53,7 @@
 -->
 
 		<!-- Para habilitar as camadas de dados, remova a diretiva  v-if="false" abaixo -->
-		<div class="map-controls map-control-data-layers" v-show="displayChartTypes" slot="activator">
+		<div class="map-controls map-control-data-layers" v-if="false" v-show="displayChartTypes" slot="activator">
 			<div 
 				v-for="layer in showDataLayers" 
 				v-show="true" 
@@ -123,7 +123,7 @@ import api from '../lib/api.js'
 import utils from '../lib/utils.js'
 import Store from '../lib/store.js'
 import Charts from '../lib/charts.js'
-import DataLayers from '../lib/datalayers.js'
+//import DataLayers from '../lib/datalayers.js'
 import axios from 'axios'
 import chroma from 'chroma-js'
 
@@ -251,16 +251,8 @@ export default {
 				name: 'on',
 				icon: 'layers'
 			}],
+			// dataLayers are not currently in use
 			dataLayers: [{
-/*				name: 'IDH em 2000',
-				id: 'idh2000',
-			}, {
-				name: 'IDH em 2010',
-				id: 'idh2010',
-				selected: true
-
-			}, { 
-*/				
 				name: 'Renda per capita 2010',
 				id: 'pibPerCapita2010',
 				chromaScale: ['#fff', '#000'],
@@ -273,9 +265,6 @@ export default {
 				chromaDomain: [ 5000, 50000],
 				legend: ['Até R$ 5 mil', 'De R$ 5 mil até R$ 25 mil', 'De R$ 25 mil até R$ 50 mil', 'Mais de R$ 50 mil']
 			}, {
-//				name: 'Densidade demográfica',
-//				id: 'densidade'
-//			}, {
 				name: 'Índice Gini 2000',
 				id: 'gini2000',
 				chromaScale: ['#252525', '#f7f7f7'],
@@ -306,12 +295,13 @@ export default {
 			mostrarIndicesIndividuais: false,
 
 			mapLegend: {
-				show: false,
+/*				show: false,
 				title: 'Quociente de locação',
 				palette: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
 				domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0],
 				padding: [0, 0],
 				labels: ['Até 0,1', '0,1 \u2014 0,25', '0,25 \u2014 0,5', '0,5 \u2014 1,0', '1,0 \u2014 2.0', '2.0 \u2014 4.0', '4.0 \u2014 8.0', '8,0 ou mais']
+*/				
 			}	
 
 		}
@@ -332,9 +322,7 @@ export default {
 			if (this.uf) {
 				this.highlightStateBorder(this.uf)
 				this.flyToState(this.uf.sigla)
-				this.loadIbgeData(this.uf)
-				//if (this.uf.sigla == 'SP')
-				//	this.drawMunicipalities()	// Just a test
+				//this.loadIbgeData(this.uf)
 			}
 			else {
 				Charts.removeCharts()
@@ -446,6 +434,7 @@ export default {
 			maxZoom: 18,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
 		});
+
 
 		greenTileLayer.addTo(this.map);
 
@@ -682,6 +671,7 @@ export default {
 				this.map.removeLayer(this.topoLayer)
 		},
 
+/*
 		loadIbgeData (uf) {
 			var that = this
 			setTimeout(() => {
@@ -707,6 +697,7 @@ export default {
 				chroma.scale(dataLayer.chromaScale).domain(dataLayer.chromaDomain)
 			)
 		},
+*/
 
 		// THE METHOD BELOW IS NOT CURRENTLY IN USE
 		drawMunicipalities () {
@@ -764,7 +755,7 @@ export default {
 			var indexType = chart.name,
 				palette = chart.palette, 
 				domain = chart.domain
-			// this.indexes contains the candidate for who we are generating the individual index
+			// this.indexes contains the candidate for whom we are generating the individual index
 			palette = palette || ['#fee5d9', '#a50f15']
 			domain = domain || [0, 1]
 			var chromaColor = chroma.scale(palette).domain(domain)
@@ -806,11 +797,13 @@ export default {
 
 	.map-controls {
 	    background-color: #424242;	
-	    border: 2px solid #424242;
+	    background-color:#fff;
+	    border: 0px solid #424242;
 	    padding: 4px;
 	    cursor: pointer;
 	    z-index:10000;
 	    color: #ddd;
+	    color:#000;
 	}
 
 	.map-control-zoom {
@@ -858,8 +851,11 @@ export default {
 	.leaflet-bar a {
 		border:0;
 		border-radius: 0 !important;
+/*
 		background-color:#424242 !important;
 		color:#eee !important;
+*/
+		color:rgb(61,61,61) !important;	 	
 	}
 
 .leaflet-touch .leaflet-control-layers,

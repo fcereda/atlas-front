@@ -32,11 +32,25 @@
 
 	    <p></p>
 
+        <v-select 
+            v-if="true"
+            label="Procurar candidato" 
+            editable 
+            item-value="id" 
+            item-text="label"
+            style="z-index:10000;" 
+            z-index="10000"
+
+            cache-items              
+            :items="items"
+            :search-input.sync="search"
+        ></v-select>
+ 
 		<atlas-select-candidate
 			:uf="uf"
 			@add-candidate="addCandidate"
-            @add-multiple-candidates="addMultipleCandidates">
-		</atlas-select-candidate>
+            @add-multiple-candidates="addMultipleCandidates"
+        ></atlas-select-candidate>
 
 	</v-container>
 
@@ -65,6 +79,8 @@ import Store from '../lib/store.js'
 import Colors from '../lib/colors.js'
 import Charts from '../lib/charts.js'
 
+import axios from 'axios'
+
 var currentColorIndex = 0
 
 function getNextColor () {
@@ -81,7 +97,7 @@ export default {
 	components: {
 		AtlasSelectCandidate,
 		AtlasSelectUf,
-		AtlasCandidateChip
+		AtlasCandidateChip,
 	},
 
 	props: [ 'uf', 'colorScale' ],
@@ -89,12 +105,20 @@ export default {
     data: () => ({
 
     	candidatosSelecionados: [],
+        search: '',
+        items: [],
+
     	colorSequence: new Colors.ColorSequence('categorical', 'usable'),
     	showBuscaAvancada: false,
     	snackbar: {
     		text: 'Erro tentando carregar dados',
     		visible: false
-    	}
+    	},
+
+        testeNome: '',
+        testeSuggestions: ['Paulo Salim Maluf (PPB) \u2014 Deputado 2014', 
+        'Anthony William Garotinho Matheus de Oliveira (PMDB) | Presidente T1 2002', 
+        'Arizona\nAR', 'Nevada\nNE', 'California', 'Oregon', 'Utah', 'Washington'].map((item) => ({name: item, text:item}))
 
     }),
 
@@ -102,11 +126,37 @@ export default {
 
         colorScale: function () {
             this.setColorScale(this.colorScale)
+        },
+
+        search (val) {
+            val && this.querySelectionsCandidates(val)
         }
 
     },
 
     methods: {
+
+        querySelectionsCandidates (v) {
+            v = v || ''
+            if (v.length < 3)
+                return;
+            console.log('entrou em querySelectionsCandidate')
+            console.log(v)
+            axios.get(`/api/candidatos?uf=${this.uf.sigla}&nome=${v.toUpperCase()}`)
+            .then((response) => {
+                console.log('axios respondeu')
+                console.log(response)
+                this.items = response.data.sort((a, b) => b.votacao - a.votacao).map((candidato) => ({
+                    id: candidato.id,
+                    label: `${candidato.nome} (${candidato.partido}) \u2014 ${candidato.cargo} ${candidato.ano} ${candidato.classificacao}o.`,
+                }))                   
+            })
+            .catch((error) => {
+                console.error('error trying to fetch candidates')
+                console.error(error)
+            })
+        },    
+
 
     	setUF (uf) {
     		this.uf = uf
@@ -329,7 +379,10 @@ export default {
 	width: 100%;
 	margin-top: -4px;
 	overflow-y: hidden;
-	color: #ddd;
+	/*
+    color: #ddd;
+    */
+    color:#333;
 }	
 
 .delete-button {
@@ -345,11 +398,13 @@ export default {
     height: 12px;
     width: 12px;
     background: #444;
+    background: #fff;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #666;  
-    -webkit-border-radius: 1ex;
+    background: #ddd;
+    -webkit-border-radius: 2px;
 }
 
 ::-webkit-scrollbar-corner {

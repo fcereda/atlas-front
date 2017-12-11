@@ -58,7 +58,7 @@
    	    		<v-btn
    	    			flat
    	    			dense
-   	    			color="grey lighten-3"
+   	    			_color="grey lighten-3"
 	    			@click="showBuscaAvancada = true"
 	    		>Busca avançada
 	    		</v-btn>	

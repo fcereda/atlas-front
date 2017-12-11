@@ -91,7 +91,8 @@
 
 .candidate-record {
 	width:100%;
-	background-color: #484848;
+	background-color: transparent; 
+	/*#484848;*/
 	border: 1px solid #888;
 	margin-top:4px;
 	margin-bottom:12px;

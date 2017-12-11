@@ -1,7 +1,6 @@
 'use strict'
 
 import axios from 'axios'
-import Store from './store.js'
 
 var mapasMunicipios = {},
 	mapaAtual = null,

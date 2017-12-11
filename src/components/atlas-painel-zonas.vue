@@ -1,8 +1,8 @@
 <template>
 
-<div style="width:100%;min-height:100px;color:#ddd;">
+<div style="width:100%;min-height:100px;color:#333;">
 	<div style="text-align:right">
-		<v-btn flat dark color="grey lighten-1" @click="closePanel">
+		<v-btn flat dark color="grey darken-1" @click="closePanel">
 			<v-icon>keyboard_arrow_left</v-icon>&nbsp;&nbsp;Voltar à seleção de candidatos
 		</v-btn>
 	</div>
@@ -44,7 +44,7 @@
 <style>
 
 .painel-zonas {
-	border-bottom: 1px solid #616161;
+	border-bottom: 1px solid #aaa;
 }
 
 table.zona-detalhes {
