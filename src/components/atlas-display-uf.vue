@@ -15,7 +15,7 @@
 	            	<v-subheader v-text="'Escalas de cor'"></v-subheader>
 				    <template v-for="item in menuItems">
 				    	<v-list-tile v-if="item.title || item.colors" :key="item.title" @click="setColorScale(item)">
-							<i class="material-icons" :style="item.selected ? 'color:#aaa;' : 'color:transparent;'">done</i>
+							<i class="material-icons" :style="item.selected ? 'color:#616161;' : 'color:transparent;'">done</i>
 							&nbsp;
 	          				<v-list-tile-title v-if="item.title">{{ item.title }}</v-list-tile-title>
 	          				<template v-for="color in item.colors">
@@ -50,10 +50,13 @@ export default {
 
 		const colorScales = [{
 			type: 'categorical',
-			baseColor: 'usable'
+			baseColor: 'standard'
 		}, {
 			type: 'categorical',
-			baseColor: 'teal'
+			baseColor: 'reversed'
+		}, {	
+			type: 'categorical',
+			baseColor: 'usable'
 		}, {
 			type: 'categorical',
 			baseColor: 'set1'
@@ -84,7 +87,8 @@ export default {
 				return {
 					type,
 					baseColor,
-					colors: (new Color.ColorSequence(type, baseColor)).getColorsFromSequence(0, 7)
+					colors: (new Color.ColorSequence(type, baseColor)).getColorsFromSequence(0, 7),
+					selected: false
 				}		
 			})	
 

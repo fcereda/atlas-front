@@ -93,7 +93,7 @@ export default {
 
     	candidatosSelecionados: [],
 
-    	colorSequence: new Colors.ColorSequence('categorical', 'usable'),
+    	colorSequence: new Colors.ColorSequence('categorical', 'standard'),
     	showBuscaAvancada: false,
     	snackbar: {
     		text: 'Erro tentando carregar dados',
@@ -131,7 +131,6 @@ export default {
             if (this.candidatosSelecionados && this.candidatosSelecionados.length) {
                 this.candidatosSelecionados.forEach((candidato) => {
                     candidato.color = this.colorSequence.getNextColor()
-                    console.error(Store.obterCandidato(candidato))
                     Store.obterCandidato(candidato).color = candidato.color
                 })
                 // Como mudamos as cores, repintamos os gráficos

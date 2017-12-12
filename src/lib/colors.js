@@ -31,6 +31,9 @@ const colorCircle = [
 ]
 ]
 
+const materializeSequence = ["229,57,53", "30,136,229", "251,140,0","94,53,177", "0,172,193", "255,179,0", "142,36,170",
+"57,73,171", "216,27,96", "192,202,51", "0,137,123", "253,216,53"]
+
 const brewerScales = {
 	'set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'],
 	'paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
@@ -45,10 +48,20 @@ function hexToRgb (hex) {
 var categoricalScales = (function () {
 	const categoricalScales = {},
 		circleScales = {
-			hot: [1, 3, 5, 7, 9, 10, 0, 2, 4, 6, 8, 11],
 			teal: [9, 7, 5, 3, 1, 11, 8, 6, 4, 2, 0, 10],
 			usable: [7, 2, 10, 4, 0, 6, 1, 8, 3, 11]
-		}  	
+		},
+		materializeScales = {
+			standard: [0,1,2,3,4,5,6,7,8,9,10,11],
+			reversed: [11,10,9,8,7,6,5,4,3,2,1]
+		}
+		
+	for (var scaleName in materializeScales) {
+		let scale = materializeScales[scaleName],
+			colors = scale.map((index) => materializeSequence[index])
+
+		categoricalScales[scaleName] = colors
+	}
 
 	for (var scaleName in circleScales) {			
 		let colors = [],

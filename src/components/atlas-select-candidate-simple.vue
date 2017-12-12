@@ -11,7 +11,7 @@
 	            v-model="candidatoSelecionado"
 	            label="Adicionar candidato" 
 	            no-data-text="Nenhum nome encontrado"
-	            :editable ="false"
+	            :editable ="true"
 	            solo
 	            autocomplete
 	            clearable

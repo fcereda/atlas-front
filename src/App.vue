@@ -23,7 +23,7 @@
               <span>Voltar à tela inicial</span>
             </v-tooltip>  
             <v-tooltip bottom open-delay="200" z-index="10000">
-              <v-btn flat icon _color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator">
+              <v-btn flat icon _color="blue-grey lighten-4" class="button-logo-pequeno" slot="activator" @click="saveState">
                 <v-icon>save</v-icon>
               </v-btn>
               <span>Salvar o mapa atual</span>
@@ -194,6 +194,10 @@
         this.snackbar.text = text
         this.snackbar.color = color
         this.snackbar.visible = true
+      },
+
+      saveState () {
+        this.showSnackbar ('Ainda não implementado', 'warning') 
       }
 
     }  
