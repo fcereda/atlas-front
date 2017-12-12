@@ -35,7 +35,11 @@ export default {
         plottingColors = candidatos.filter((candidato) => !candidato.disabled)
                     .map(({ color }) => `rgba(${color},0.75)` )        
 
-        plottingData = Object.entries(coordenadas).map(([id, {lat, long}]) => {
+        //plottingData = Object.entries(coordenadas).map(([id, {lat, long}]) => {
+
+        plottingData = Object.keys(coordenadas).map((id) => {
+            var {lat, long} = coordenadas[id]
+  
             // A base de dados só contém os locais onde o candidato obteve pelo menos um voto,
             // por isso precisamos primeiro checar se o local existe no object candidato.votos 
 
@@ -56,7 +60,8 @@ export default {
                 }) ],
                 angulosIniciais = [...porcentagensAcumuladas.slice(0, porcentagensAcumuladas.length -1).map((porcentagem) => radianos[porcentagem]), Math.PI * 2]
 
-            var indices = candidatos.map((candidato) => candidato.indices[id]) 
+            var indices = candidatos.map((candidato) => candidato.indices[id]),
+                totaisUrnas = candidatos.map((candidato) => candidato.votos[id] ? candidato.votos[id].total : 0)
 
             return {
                 id,
@@ -71,6 +76,7 @@ export default {
                 porcentagensAcumuladas,
                 angulosIniciais,
                 indices,
+                totaisUrnas,
                 colors: plottingColors
             }
         })
@@ -242,10 +248,48 @@ export default {
             }      
 
             ctx.beginPath()
-            ctx.fillStyle = colors[index]   
-            ctx.fillRect(dot.x + left, dot.y - radius * (3/8), width, radius * (6/8))
+            ctx.fillStyle = colors[index]
+            ctx.fillRect(dot.x + left, dot.y - radius * (4/8), width, radius * (8/8))
             ctx.closePath()                          
         }
+
+        var drawDiamondChart = function (ctx, dot, d, index) {
+            var posicaoNoRanking = d.ranking.indexOf(index)
+            if (posicaoNoRanking >= 2)
+                return    // Diamond Chart only displays data for the winner candidate and the runner-up
+
+            var left, 
+                top, 
+                numCandidatos = d.proporcoes.length,
+                total = numCandidatos > 1 ? d.proporcoes[d.ranking[0]] + d.proporcoes[d.ranking[1]] : 1.0,
+                porcentagem = d.proporcoes[index] / total
+
+            ctx.beginPath()
+            ctx.fillStyle = colors[index]
+            if (!posicaoNoRanking) {
+                // Winner in the district
+                left = radius * (1 - Math.sqrt((1 - porcentagem) * 2))
+                top = radius - left
+                ctx.moveTo(dot.x - radius, dot.y)
+                ctx.lineTo(dot.x, dot.y - radius)
+                ctx.lineTo(dot.x + left, dot.y - top)
+                ctx.lineTo(dot.x + left, dot.y + top)
+                ctx.lineTo(dot.x, dot.y + radius)
+                ctx.lineTo(dot.x - radius, dot.y)
+            }
+            else {
+                // Runner-up
+                left = radius * (1 - Math.sqrt(porcentagem * 2))
+                top = radius - left
+                ctx.moveTo(dot.x + left, dot.y - top)
+                ctx.lineTo(dot.x + radius, dot.y)
+                ctx.lineTo(dot.x + left, dot.y + top)
+                ctx.lineTo(dot.x + left, dot.y - top)
+            }
+            ctx.fill()
+            ctx.closePath()
+        }        
+
 
         var drawIndexChart = function (ctx, dot, d, index) {
             if (index != indexCandidatoSelecionado)
@@ -274,15 +318,16 @@ export default {
         }
 
         const functionsByChartType = {
-            'bar'   : drawBarChart,
-            'circle': drawCircleChart,
-            'donut' : drawDonutChart,
-            'pie'   : drawPieChart,
-            'winner': drawWinnerChart,
-            'pill'  : drawPillChart,
-            'hbar'  : drawHorizontalBarChart,
-            'index' : drawIndexChart,
-            'empty' : drawEmptyChart
+            'bar'    : drawBarChart,
+            'circle' : drawCircleChart,
+            'donut'  : drawDonutChart,
+            'pie'    : drawPieChart,
+            'winner' : drawWinnerChart,
+            'pill'   : drawPillChart,
+            'hbar'   : drawHorizontalBarChart,
+            'index'  : drawIndexChart,
+            'diamond': drawDiamondChart,
+            'empty'  : drawEmptyChart
         }       
 
         function drawChart (params) {
@@ -291,13 +336,28 @@ export default {
                 minRadius = 5,
                 maxRadius = 40
 
+            if (candidatoSelecionado) 
+                indexCandidatoSelecionado = Store.candidatos.indexOf(candidatoSelecionado)
+            else
+                indexCandidatoSelecionado = null
+
             if (options.radiusType == VARIABLE_RADIUS) {
                 baseRadius = Math.pow(2, Math.min(params.zoom, 10)) / 12
                 minRadius = Math.max(minRadius, params.zoom/2)
-                for (var i=0; i<plottingData.length; i++) {
-                    if (plottingData[i].totalVotos > maxTotalVotos)
-                        maxTotalVotos = plottingData[i].totalVotos
+                if (chartType == 'index') {  
+                    for (var i=0; i<plottingData.length; i++) {
+                        if (plottingData[i] && plottingData[i].totaisUrnas) {
+                            if (plottingData[i].totaisUrnas[indexCandidatoSelecionado] > maxTotalVotos)
+                                maxTotalVotos = plottingData[i].totaisUrnas[indexCandidatoSelecionado]
+                        }    
+                    }
                 }
+                else {
+                    for (var i=0; i<plottingData.length; i++) {
+                        if (plottingData[i].totalVotos > maxTotalVotos)
+                            maxTotalVotos = plottingData[i].totalVotos
+                    }
+                }    
             }
             else {
                 baseRadius = Math.pow(2, Math.min(params.zoom, 12) / 2.2)                 
@@ -305,18 +365,19 @@ export default {
 
             ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
             posicoesCharts = []
-            if (candidatoSelecionado) {
-                indexCandidatoSelecionado = Store.candidatos.indexOf(candidatoSelecionado)
-            }
-            else
-                indexCandidatoSelecionado = null
 
             for (var i = 0; i < plottingData.length; i++) {
                 var d = plottingData[i],
                     numCandidatos = (drawFunction == drawIndexChart) ? d.indices.length : d.votos.length;
 
                 if (options.radiusType == VARIABLE_RADIUS) {
-                    radius = baseRadius * Math.pow(d.totalVotos / maxTotalVotos, 0.5)    
+                    console.log('radiusType VARIABLE')
+                    let tamanhoDistrito = 0
+                    if (chartType == 'index')     
+                        tamanhoDistrito = d.totaisUrnas ? d.totaisUrnas[indexCandidatoSelecionado] : 0
+                    else
+                        tamanhoDistrito = d.totalVotos
+                    radius = baseRadius * Math.pow(tamanhoDistrito / maxTotalVotos, 0.5)    
                     if (radius < minRadius)
                         radius = minRadius
                     if (radius > maxRadius)

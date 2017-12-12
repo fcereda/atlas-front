@@ -116,16 +116,6 @@ function getArrayFromCSV (data, selectedFields) {
 			obj[key] = row[fields[key]]
 		return obj
 	})
-/*
-	for (var i=1; i<lines.length; i++) {}
-
-	console.log('This CSV file has ' + lines.length + ' lines')
-	console.log('The header is:' + lines[0]);
-	console.log('The next 10 lines are:')
-
-	for (var i=1; i<=10; i++)
-		console.log(lines[i])
-*/
 }
 
 export default {
@@ -195,7 +185,7 @@ export default {
 		query = query + '&' + buildSearchQuery('UF', uf, 1)
 		query = query + '&' + buildSearchQuery('NUMERO_CANDIDATO', numero, 2)
 
-		console.log(query);
+		//console.log(query);
 
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/votos' + query)
@@ -210,8 +200,6 @@ export default {
 					'votos': 'QTDE_VOTOS',
 				})
 				data.forEach((row) => row.votos = parseInt(row.votos))
-				console.error(data[10])
-
 				resolve(data)
 			})
 			.catch((error) => {
@@ -245,7 +233,7 @@ export default {
 
 		// No time for niceties. The query below is guaranteed to work:
 		query = `?ano=${ano}&cargo=${cargo}&agregacao_regional=7&agregacao_politica=4&columns[0][name]=UF&columns[0][search][value]=${uf}&columns[1][name]=NUM_TURNO&columns[1][search][value]=${turno}`
-		console.log(query);
+		//console.log(query);
 
 /*
 		// Fallback para o caso de a API "/tse" do CEPESP parar de funcionar novamente
@@ -269,7 +257,6 @@ export default {
 		return new Promise ((resolve, reject) => {
 			axios.get(cepespURL + '/tse' + query)
 			.then((response) => {
-				//console.log(response.data)
 				var data = getArrayFromCSV(response.data, {
 					'ano': 'ANO_ELEICAO',
 					'turno': 'NUM_TURNO',

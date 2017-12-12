@@ -13,6 +13,7 @@
 			:partido="candidato.partido"
 			:cargo="candidato.cargo"
 			:ano="candidato.ano"
+            :numero="candidato.numero"
 			:color="candidato.color"
 			:classificacao="candidato.classificacao"
 			:total="candidato.total"
@@ -149,8 +150,8 @@ export default {
     		this.candidatosSelecionados.push(candidateObj)
     		return api.getTotalVotesByZoneAndCity({...candidate, uf: this.uf.sigla})
     		.then((data) => {
-    			console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
-    			console.log(`${data.length} rows carregados`)
+    			//console.log('** CARREGAMOS VOTOS TOTAIS POR ZONA E MUNICIPIO!')
+    			//console.log(`${data.length} rows carregados`)
     			data.forEach(({codigoMunicipio, codigoZona, votos}) => {
     				var id = Store.calcCoordenadaId(codigoMunicipio, codigoZona)
     				if (totalVotos[id])

@@ -10,6 +10,7 @@
 	        	:items="candidatos"
 	            v-model="candidatoSelecionado"
 	            label="Adicionar candidato" 
+	            no-data-text="Nenhum nome encontrado"
 	            :editable ="false"
 	            solo
 	            autocomplete
@@ -29,12 +30,24 @@
 	          	:debounce-search="200"
 	            class="pa-0 ma-0"
 	        >
-  	       		<template slot="item" scope="candidato">
-	       		{{ candidato.item.nome }}&nbsp;<small>({{ candidato.item.partido }}) {{nomeCargo(candidato.item.cargo)}} {{candidato.item.ano}}</small>
+<!--
+	       		<template slot="item" scope="candidato">
+	       		<v-list-tile-content>
+	       			<v-list-tile-title class="pt-1">{{ candidato.item.nome }} ({{ candidato.item.partido }})</v-list-tile-title>
+	       			<v-list-tile-sub-title class="pb-1">{{nomeCargo(candidato.item.cargo)}} {{candidato.item.ano}}</v-list-tile-sub-title>
+	       		</v-list-tile-content>	
 	       		</template>
+-->
+ 	       		<template slot="item" scope="candidato">
+	       		{{ capitalizeName(candidato.item.nome) }}&nbsp;
+	       		<small class="detail">({{ candidato.item.partido }})&nbsp;{{nomeCargo(candidato.item.cargo)}} {{candidato.item.ano}}</small>
+	       		</template>
+
 		       	<template slot="no-data">
-		       	&nbsp;{{ candidatoSelecionado ? 'Nenhum candidato encontrado' : 'Digite parte do nome do candidato' }}
+		       	&nbsp;{{ candidatoSelecionado ? 'Nenhum nome encontrado' : 'Digite parte do nome do candidato' }}
 		       	</template>	       		
+
+
 			</v-select>
 
 
@@ -142,10 +155,10 @@ export default {
         	if (this.candidatoSelecionado) {
         		this.addCandidate()
         		this.$refs.selectCandidatos.cachedItems = []
-        		console.log(this.$refs.selectCandidatos.searchInput)
+        		this.$refs.selectCandidatos.searchValue = null
         	}
-        }
-		
+        },
+
 	},		
 
 	methods: {
@@ -174,33 +187,15 @@ export default {
             })
         },    
 
+        capitalizeName (nome) {
+        	return Utils.capitalizeName(nome)
+        },
+
         nomeCargo (cargo) {
         	return Utils.obterNomeCargo(cargo)
         },
 
-/*
-		changeYear (year) {
-			if (year != this.year)
-				this.candidatos = []
-			this.year = year
-			this.getCandidatesList()
-		},
 
-		changeCargo (cargo) {
-			if (cargo != this.cargo)
-				this.candidatos = []
-			this.cargo = cargo
-			this.getCandidatesList()
-		},
-
-		getCandidatesList() {
-			if (!this.cargo || !this.year) {
-				this.searchCandidates = []
-				return;
-			}
-			this.searchCandidates = this.queryCandidates()
-		},
-*/
 		adicionarCandidato (candidato) {
 			var { nome, cargo, ano, partido, numero, classificacao, votacao } = candidato,
 				newCandidate = {
@@ -216,10 +211,6 @@ export default {
 		},
 
 		addCandidate () {
-			console.log('entrou em addCandidate')
-			console.log('candidatoSelecionado = ')
-			console.log(this.candidatoSelecionado)
-			//this.adicionarCandidato({...this.candidatoSelecionado, cargo: this.cargo, ano: this.ano})
 			this.adicionarCandidato(this.candidatoSelecionado)
 			this.candidatoSelecionado = null
 		},
@@ -239,18 +230,8 @@ export default {
 				}
 			})
 			this.$emit('add-multiple-candidates', candidatos)
-			console.log("CHEGOU ATÉ AQUI!!")
-			return
-
-			//candidatosSelecionados.forEach((candidato) => console.log(candidato))
-			// Vamos acrescentar um de cada vez, em intervalos de 50 ms
-			candidatosSelecionados.forEach((candidato, index) => {
-				setTimeout(() => {
-					this.adicionarCandidato(candidato)
-				}, 50*index)
-			})	
 		},
-
+/*
 		queryCandidates (val) {
 
 			function orderCandidatesByRelevance (candidatos, nome) {
@@ -311,7 +292,7 @@ export default {
 		setFocusAddCandidate () {
 			this.$refs.addCandidate.$el.focus()
 		},
-
+*/
 	},
 
 }
@@ -324,6 +305,10 @@ export default {
 	padding-left: 8px;
 	padding-right: 8px;
 	padding-bottom: 8px;
+}
+
+.detail {
+	color: #444;
 }
 
 </style>

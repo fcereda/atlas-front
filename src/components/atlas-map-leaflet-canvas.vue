@@ -16,7 +16,14 @@
 				@click="changeChartType(chart.name)" 
 				v-bind:class="chartType==chart.name?'selected-chart':''"
 			>
-				<v-icon class="pa-1" :color="chartType==chart.name?'blue darken-2':'grey darken-2'">{{ chart.icon }}</v-icon>
+				<v-icon 
+					v-if="chart.icon" 
+					class="pa-1" 
+					:color="chartType==chart.name?'blue darken-2':'grey darken-2'"
+					:style="chart.transform? 'transform:' + chart.transform + ';' : '' "
+				>
+				{{ chart.icon }}
+				</v-icon>
 			</div>
 			<div 
 				v-for="chart in indexChartTypes"
@@ -60,7 +67,13 @@
 				@click="showMenu" 
 				v-bind:class="chartType==layer.name?'selected-chart':''"
 			>
-				<v-icon class="pa-1" :color="chartType==layer.name?'blue lighten-2':'grey lighten-2'">{{ layer.icon }}</v-icon>
+				<v-icon 
+					class="pa-1" 
+					:color="chartType==layer.name?'blue lighten-2':'grey lighten-2'"
+					:style="layer.transform? 'transform:' + layer.transform + ';' : '' "
+				>
+				{{ layer.icon }}
+				</v-icon>
 			</div>
 		</div>	
 
@@ -204,7 +217,7 @@ export default {
 			}, {
 				name: 'pill',
 				icon: 'chrome_reader_mode'
-			}, {
+			},{		
 				name: 'hbar',
 				icon: 'format_align_left'
 			}, {
@@ -219,7 +232,8 @@ export default {
 				// These colors came straigh from ColorBrewer
 				// palette and domain will be used to create a chroma color function
 				//palette: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
-				palette: ["#b35806","#e08214","#fdb863","#fee0b6","#f7f7f7","#d8daeb","#b2abd2","#8073ac","#542788"],
+				//palette: ["#b35806","#e08214","#fdb863","#fee0b6","#f7f7f7","#d8daeb","#b2abd2","#8073ac","#542788"],
+				palette: ['#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'],
 				//domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0],
 				domain: [0, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0],
 				legendTitle: 'Quociente de locação',
@@ -339,9 +353,6 @@ export default {
 						indexObj = this.indexChartTypes[i]
 				}
 				var chromaColor = chroma.scale(indexObj.palette).domain(indexObj.domain)
-				console.log('chromaColor foi definido para o objeto ', indexObj)
-				console.log(chromaColor)
-				console.log('chromaColor(0.5) = ', chromaColor(0.5))
 				Charts.setChartType('index', this.radiusType, this.showIndexes, this.indexChartType, chromaColor)
 				this.setMapLegendFromIndex(indexObj)
 				this.mostrarIndicesIndividuais = true
@@ -362,6 +373,7 @@ export default {
 		window.addEventListener('resize', () => {
 			this.map.invalidateSize()
 			this.mapHeight = this.calcMapHeight()
+			Charts.redrawCharts()
 		})
 
 		// Events for viewing district data on the side panel

@@ -240,7 +240,9 @@ try {
     		process.exit()
     	}
  		print(rows.length + ' candidatos carregados')
-    	candidatos = rows.map((row) => parseCandidateRow(row))
+    	candidatos = rows
+    		.filter((row) => parseInt(row['CODIGO_CARGO']) <= 8)	// Elimina todos os prefeitos e vereadores
+    		.map((row) => parseCandidateRow(row))
 
     	candidatos.forEach((candidato) => {
     		var {uf, ano, cargo} = candidato
@@ -348,7 +350,6 @@ try {
     	municipiosPorUf = {}
     	municipios.forEach((municipio) => {
     		let uf = municipio.uf.toUpperCase()
-    		console.log(uf)
     		if (!municipiosPorUf[uf])
     			municipiosPorUf[uf] = []
     		municipiosPorUf[uf].push(municipio)

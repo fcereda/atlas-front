@@ -1,6 +1,6 @@
 <template>
 
-<div class="candidate-record" style="width:100%;display:flex;flex-direction:column">
+<div class="candidate-record elevation-2" style="width:100%;display:flex;flex-direction:column">
 
 	<div style="width:100%; display:flex; flex-direction:row;" @mouseover="hovering=true" @mouseout="hovering=false">
 		<div class="icon-class" :style="iconStyle">
@@ -15,26 +15,26 @@
 			</div>
 			<v-tooltip bottom class="z-index-top">
 				<span v-if="hovering" class="pl-2 pointer" slot="activator">
-					<v-icon color="grey lighten-1" @click="removerCandidato">close</v-icon>
+					<v-icon color="primary" @click="removerCandidato">close</v-icon>
 				</span>
 				<span>Remover este candidato</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top" v-if="!disabled">
 				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="disableCandidato">
-					<v-icon color="grey lighten-1">visibility</v-icon>
+					<v-icon color="primary">visibility</v-icon>
 				</span>
 				<span>Ignorar este candidato temporariamente</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top" v-if="disabled">
 				<span v-if="hovering" class="pl-2 pr-2 pointer" slot="activator" @click="enableCandidato">
-					<v-icon color="grey lighten-1">visibility_off</v-icon>
+					<v-icon color="primary">visibility_off</v-icon>
 				</span>
 				<span>Voltar a ver os dados deste candidato</span>
 			</v-tooltip>	
 			<v-tooltip bottom class="z-index-top">
 				<div class="pointer" v-if="!loading" slot="activator">
-					<v-icon v-if="!showDetails" color="grey lighten-1" @click="openDetails">keyboard_arrow_down</v-icon>
-					<v-icon v-if="showDetails" color="grey lighten-1" @click="closeDetails">keyboard_arrow_up</v-icon>
+					<v-icon v-if="!showDetails" color="grey darken-1" @click="openDetails">keyboard_arrow_down</v-icon>
+					<v-icon v-if="showDetails" color="grey darken-1" @click="closeDetails">keyboard_arrow_up</v-icon>
 					</div>
 				<span>Ver mais opções</span>
 			</v-tooltip>	
@@ -88,16 +88,24 @@
 .no-padding {
 	padding: 0;
 }
-
+/*
 .candidate-record {
 	width:100%;
 	background-color: transparent; 
-	/*#484848;*/
 	border: 1px solid #888;
 	margin-top:4px;
 	margin-bottom:12px;
 	user-select: none;
 }
+*/
+.candidate-record {
+	width:100%;
+	border: 1px solid #eee;
+	margin-top: 4px;
+	margin-bottom: 12px;
+	user-select: none;
+}
+
 
 .icon-class {
 	width:32px;
@@ -145,7 +153,7 @@ import Utils from '../lib/utils.js'
 
 export default {
 
-	props: ['nome', 'partido', 'ano', 'cargo', 'color', 'classificacao', 'total', 'indiceLQ', 'indiceG', 'tipo', 'loading', 'disabled', 'showDetails'],
+	props: ['nome', 'partido', 'ano', 'numero', 'cargo', 'color', 'classificacao', 'total', 'indiceLQ', 'indiceG', 'loading', 'disabled', 'showDetails'],
 
 	data () {
 
@@ -166,13 +174,18 @@ export default {
 
 	computed: {
 
-		icone () {
-			const ICONES = {
-				'partido': 'location_city',
-				'estatistica': 'insert_chart',
-				'candidato': 'account_circle'
+		eVotoLegenda () {
+			if (this.cargo == 'de' || this.cargo == 'df' || this.cargo == 'dd') {
+				return parseInt(this.numero) < 1000
 			}
-			return ICONES[this.tipo || 'candidato']
+			return false
+		},
+
+		icone () {
+			if (this.eVotoLegenda)
+				return 'account_balance'
+			else
+				return 'account_circle'
 		},
 
 		iconStyle () {
@@ -203,8 +216,7 @@ export default {
 
 		totalStr () {
 			return Utils.formatInt(this.total)
-		}
-
+		},
 
 	}, 
 
