@@ -1,6 +1,6 @@
 # atlas
 
-> CEPESP Atlas Eleitoral
+> Front-end do Atlas Eleitoral
 
 ## Build Setup
 
