@@ -1,3 +1,5 @@
+Este é um repositório antigo. Minha proposta para o Desafio CEPESPData está em https://github.com/fcereda/atlas
+
 # atlas
 
 > Front-end do Atlas Eleitoral
